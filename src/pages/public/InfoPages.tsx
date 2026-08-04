@@ -1,4 +1,30 @@
-export function AboutPage() { return <Info eyebrow="About the system" title="Built for a better campus" copy="The School Facility Complaint Monitoring System connects students, maintenance teams, and school administrators in one transparent workflow. It replaces scattered messages and paper forms with secure, trackable reports." /> }
+export function AboutPage() { return <main className="relative min-h-screen overflow-hidden bg-[#fffdf8] px-5 pb-24 pt-32 text-slate-700">
+  <div className="absolute -right-24 top-40 h-72 w-72 rounded-full bg-amber-100/60 blur-3xl"/>
+  <div className="absolute -left-24 bottom-16 h-72 w-72 rounded-full bg-forest-100/60 blur-3xl"/>
+  <div className="relative mx-auto max-w-6xl">
+    <header className="mx-auto max-w-3xl text-center">
+      <p className="text-xs font-bold uppercase tracking-[.25em] text-forest-600">About our institution</p>
+      <h1 className="display mt-3 text-4xl text-[#800000] sm:text-5xl">IBA College of Mindanao, Inc.</h1>
+      <div className="mx-auto mt-5 h-1 w-20 rounded-full bg-amber-400"/>
+      <h2 className="mt-7 text-xl font-bold text-slate-900 sm:text-2xl">Birth and Creation of IBACM</h2>
+    </header>
+
+    <section className="mt-10 rounded-3xl border border-slate-200/80 bg-white/85 p-6 shadow-sm backdrop-blur sm:p-10">
+      <div className="grid gap-x-12 gap-y-6 text-[15px] leading-8 text-slate-600 lg:grid-cols-2">
+        <div className="space-y-6">
+          <p><strong className="text-forest-800">IBA College of Mindanao</strong>, founded in 2004 by Dr. Reynaldo B. Antonio, Sr. and Dr. Irene B. Antonio, retired public school teachers and private school administrators. With their untiring desire to support and to help the youth in the province of Bukidnon, they decided to establish their own school, the IBA College of Mindanao.</p>
+          <p>IBA College of Mindanao is a non-stock, non-profit, private educational institution offering Basic Education, Higher Education and Technical-Vocational Education. The first branch was established in Kalilangan, Bukidnon in 2005; the second branch was established in Quezon, Bukidnon in 2006; and the third branch was established in Valencia City, Bukidnon in 2007. It also has one annex campus situated at Purok 21, Valencia City.</p>
+          <p>The flourishing of the two branches ushered the birth of the IBACM Valencia branch in 2007, which serves as the main college campus.</p>
+        </div>
+        <div className="space-y-6">
+          <p>The year 2006 became a monumental year for the college in its Salawagan, Quezon, Bukidnon branch with the addition of degree programs to its eighteen registered qualifications approved by TESDA. The first CHED-recognized courses offered were Bachelor of Science in Criminology (BSCRIM), Bachelor of Public Administration (BPA), Bachelor of Science in Entrepreneurship (BSENTREP), and Bachelor of Elementary Education (BEED).</p>
+          <p>The main campus also offered eighteen registered WTR TESDA qualifications approved by UTPRAS. IBACM continued to serve the community by adding Bachelor of Science in Hotel and Restaurant Management (BSHRM) and Bachelor of Science in Information Technology (BSIT). Bachelor of Elementary Education with specialization in Early Childhood Education was offered in 2013.</p>
+          <p>Today, the Kalilangan and Quezon, Bukidnon branches have ceased operation, making the main branch and the annex campus the existing home and training ground for teaching and learning.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</main> }
 
 const mission = [
   ['I', 'Innovative Filipinos in technological, academic training and lifelong learning for quality education.'],
@@ -65,5 +91,3 @@ export function VisionMissionPage() {
     </div>
   </main>
 }
-
-function Info({eyebrow,title,copy}:{eyebrow:string;title:string;copy:string}) { return <main className="grid min-h-screen place-items-center bg-white px-5 pt-24 text-slate-800"><div className="max-w-2xl text-center"><span className="inline-flex rounded-full bg-amber-100 px-4 py-2 text-xs font-bold uppercase tracking-[.2em] text-forest-800">{eyebrow}</span><h1 className="display mt-5 text-5xl text-forest-900">{title}</h1><div className="mx-auto mt-5 h-1 w-20 rounded-full bg-amber-400"/><p className="mt-6 text-lg leading-8 text-slate-600">{copy}</p></div></main> }
