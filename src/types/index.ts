@@ -16,7 +16,9 @@ export interface Profile {
   specialization: string | null
   account_status: 'active' | 'inactive'
   avatar_url: string | null
-  account_type: 'student' | 'teacher'
+  account_type: 'student' | 'teacher' | 'staff'
+  verification_status: 'pending' | 'approved' | 'rejected'
+  department: string | null
   must_change_password: boolean
   created_at: string
   updated_at: string

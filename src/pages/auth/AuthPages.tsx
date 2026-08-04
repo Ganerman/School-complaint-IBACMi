@@ -50,9 +50,9 @@ export function LoginPage() {
   </main>
 }
 export function RegisterPage() {
-  const [form,setForm]=useState({fullName:'',studentId:'',email:'',course:'',yearLevel:'',password:'',accountType:'student' as 'student'|'teacher'});const[busy,setBusy]=useState(false)
+  const [form,setForm]=useState({fullName:'',studentId:'',email:'',course:'',yearLevel:'',department:'',password:'',accountType:'student' as 'student'|'teacher'|'staff'});const[busy,setBusy]=useState(false)
   const set=(k:string,v:string)=>setForm({...form,[k]:v})
-  async function submit(e:FormEvent){e.preventDefault();setBusy(true);const {error}=await authService.signUp(form);setBusy(false);if(error)return toast.error(friendlyError(error));toast.success('Account created. Check your email to verify it.')}
+  async function submit(e:FormEvent){e.preventDefault();setBusy(true);const {error}=await authService.signUp(form);setBusy(false);if(error)return toast.error(friendlyError(error));toast.success(form.accountType==='student'?'Account created. Check your email to verify it.':'Account created. Verify your email, then wait for administrator approval.',{duration:8000})}
   return <main className="min-h-screen bg-[#eef2f7] px-5 py-12">
     <div className="mx-auto w-full max-w-[620px]">
       <Link to="/" className="mb-7 flex items-center justify-center gap-3">
@@ -63,17 +63,18 @@ export function RegisterPage() {
         <div className="bg-forest-700 px-6 py-5 text-center text-lg font-bold text-white">USER REGISTRATION</div>
         <form className="grid gap-5 px-7 py-7 sm:px-11" onSubmit={submit}>
           {!isSupabaseConfigured&&<div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">Add Supabase credentials to your <code>.env</code> file to enable registration.</div>}
-          <p className="text-sm leading-6 text-slate-500">Create a secure student or teacher account to submit and track school facility complaints.</p>
-          <div><label className="label font-normal">I am registering as</label><select className="input h-11 rounded-md" value={form.accountType} onChange={e=>setForm({...form,accountType:e.target.value as 'student'|'teacher',studentId:'',course:'',yearLevel:''})}><option value="student">Student</option><option value="teacher">Teacher / School Staff</option></select></div>
-          <div className={`grid gap-5 ${form.accountType==='student'?'sm:grid-cols-2':''}`}>
+          <p className="text-sm leading-6 text-slate-500">Students can begin after email verification. Teacher and staff accounts require administrator identity approval.</p>
+          <div><label className="label font-normal">I am registering as</label><select className="input h-11 rounded-md" value={form.accountType} onChange={e=>setForm({...form,accountType:e.target.value as 'student'|'teacher'|'staff',studentId:'',course:'',yearLevel:'',department:''})}><option value="student">Student</option><option value="teacher">Teacher</option><option value="staff">School Staff</option></select></div>
+          <div className="grid gap-5 sm:grid-cols-2">
             <div><label className="label font-normal">Full name</label><input className="input h-11 rounded-md" required value={form.fullName} onChange={e=>set('fullName',e.target.value)}/></div>
-            {form.accountType==='student'&&<div><label className="label font-normal">School ID No.</label><input className="input h-11 rounded-md" required value={form.studentId} onChange={e=>set('studentId',e.target.value)}/></div>}
+            <div><label className="label font-normal">{form.accountType==='student'?'School ID No.':'Employee ID No.'}</label><input className="input h-11 rounded-md" required value={form.studentId} onChange={e=>set('studentId',e.target.value)}/></div>
           </div>
           <div><label className="label font-normal">School email</label><input className="input h-11 rounded-md" type="email" required value={form.email} onChange={e=>set('email',e.target.value)} placeholder="student@school.edu"/></div>
           {form.accountType==='student'&&<div className="grid gap-5 sm:grid-cols-2">
             <div><label className="label font-normal">Course</label><select className="input h-11 rounded-md" required value={form.course} onChange={e=>set('course',e.target.value)}><option value="">Select course</option>{['BSIT','BPA','CRIM','BEED','BECED','HM','ENTREP','BASIC EDUCATION DEPARTMENT'].map(course=><option key={course} value={course}>{course}</option>)}</select></div>
             <div><label className="label font-normal">Year level</label><select className="input h-11 rounded-md" required value={form.yearLevel} onChange={e=>set('yearLevel',e.target.value)}><option value="">Select year</option>{['1st Year','2nd Year','3rd Year','4th Year','5th Year'].map(x=><option key={x}>{x}</option>)}</select></div>
           </div>}
+          {form.accountType!=='student'&&<div><label className="label font-normal">Department / office</label><input className="input h-11 rounded-md" required maxLength={150} value={form.department} onChange={e=>set('department',e.target.value)} placeholder={form.accountType==='teacher'?'e.g. College of Information Technology':'e.g. Registrar Office'}/><p className="mt-1.5 text-xs text-amber-700">This account will remain pending until an administrator verifies your identity.</p></div>}
           <PasswordInput value={form.password} onChange={v=>set('password',v)}/>
           <button className="w-full rounded-full bg-forest-700 px-5 py-3 font-bold text-white shadow-lg shadow-forest-100 transition hover:bg-forest-800" disabled={busy||!isSupabaseConfigured}>{busy?'Creating account…':`Create ${form.accountType==='student'?'Student':'Teacher / Staff'} Account`}</button>
           <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm leading-5 text-red-800"><b>Gentle Reminder:</b> Use your real school information and never share your password or confidential complaint evidence with others.</div>

@@ -36,13 +36,13 @@ export const authService = {
         queryParams: { prompt: 'select_account' },
       },
     }),
-  signUp: async (data: { email: string; password: string; fullName: string; studentId: string; course: string; yearLevel: string; accountType: 'student'|'teacher' }) =>
+  signUp: async (data: { email: string; password: string; fullName: string; studentId: string; course: string; yearLevel: string; department: string; accountType: 'student'|'teacher'|'staff' }) =>
     supabase.auth.signUp({
       email: data.email.trim().toLowerCase(),
       password: data.password,
       options: {
         emailRedirectTo: `${window.location.origin}/login`,
-        data: { full_name: data.fullName.trim(), student_id: data.accountType==='student'?data.studentId.trim():'', course: data.accountType==='student'?data.course:'', year_level: data.accountType==='student'?data.yearLevel:'', account_type:data.accountType },
+        data: { full_name:data.fullName.trim(), student_id:data.studentId.trim(), course:data.accountType==='student'?data.course:'', year_level:data.accountType==='student'?data.yearLevel:'', department:data.accountType==='student'?'':data.department.trim(), account_type:data.accountType },
       },
     }),
   signOut: async () => supabase.auth.signOut(),
