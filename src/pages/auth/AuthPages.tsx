@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, LoaderCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { authService } from '../../services/authService'
 import { friendlyError } from '../../utils/errors'
@@ -17,6 +17,15 @@ function AuthShell({ title, subtitle, children }: { title: string; subtitle: str
 function PasswordInput({ value, onChange, label='Password' }: { value:string; onChange:(v:string)=>void; label?:string }) {
   const [show,setShow]=useState(false)
   return <div><label className="label">{label}</label><div className="relative"><input className="input pr-11" type={show?'text':'password'} minLength={8} required value={value} onChange={e=>onChange(e.target.value)} /><button type="button" className="absolute right-3 top-2.5 text-slate-400" onClick={()=>setShow(!show)} aria-label="Show password">{show?<EyeOff size={19}/>:<Eye size={19}/>}</button></div></div>
+}
+
+function GoogleIcon({ className = 'h-5 w-5' }: { className?: string }) {
+  return <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+    <path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.4-.18-2.07H12v3.92h5.38a4.6 4.6 0 0 1-2 3.02v2.54h3.24c1.9-1.75 2.98-4.33 2.98-7.41Z"/>
+    <path fill="#34A853" d="M12 22c2.7 0 4.97-.9 6.63-2.43l-3.24-2.54c-.9.6-2.05.96-3.39.96-2.61 0-4.82-1.76-5.61-4.13H3.04v2.62A10 10 0 0 0 12 22Z"/>
+    <path fill="#FBBC05" d="M6.39 13.86A6 6 0 0 1 6.08 12c0-.65.11-1.28.31-1.86V7.52H3.04A10 10 0 0 0 2 12c0 1.61.39 3.14 1.04 4.48l3.35-2.62Z"/>
+    <path fill="#EA4335" d="M12 6.01c1.47 0 2.79.51 3.83 1.5l2.87-2.88A9.62 9.62 0 0 0 12 2a10 10 0 0 0-8.96 5.52l3.35 2.62C7.18 7.77 9.39 6.01 12 6.01Z"/>
+  </svg>
 }
 export function LoginPage() {
   const { user, profile }=useAuth(); const nav=useNavigate(); const [identifier,setIdentifier]=useState(''); const [password,setPassword]=useState(''); const [busy,setBusy]=useState(false); const [googleBusy,setGoogleBusy]=useState(false)
@@ -41,7 +50,10 @@ export function LoginPage() {
           </div>
           <button className="w-full rounded-full bg-forest-700 px-5 py-3 font-bold text-white shadow-lg shadow-forest-100 transition hover:bg-forest-800" disabled={busy||!isSupabaseConfigured}>{busy?'Signing in…':'Sign In'}</button>
           <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-slate-400"><span className="h-px flex-1 bg-slate-200"/><span>or</span><span className="h-px flex-1 bg-slate-200"/></div>
-          <button type="button" onClick={googleSignIn} className="flex w-full items-center justify-center gap-3 rounded-full border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60" disabled={googleBusy||!isSupabaseConfigured}><span className="grid h-5 w-5 place-items-center rounded-full font-bold text-blue-600">G</span>{googleBusy?'Connecting…':'Continue with Google'}</button>
+          <button type="button" onClick={googleSignIn} className="group relative flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-12 py-3 font-semibold text-slate-700 shadow-sm transition duration-200 hover:border-slate-400 hover:bg-slate-50 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100 active:scale-[.99] disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none" disabled={googleBusy||!isSupabaseConfigured}>
+            <span className="absolute left-4 grid h-8 w-8 place-items-center rounded-full bg-white shadow-sm ring-1 ring-slate-100 transition group-hover:scale-105"><GoogleIcon className="h-5 w-5"/></span>
+            {googleBusy?<span className="inline-flex items-center gap-2"><LoaderCircle className="h-4 w-4 animate-spin"/>Connecting…</span>:'Continue with Google'}
+          </button>
           <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm leading-5 text-red-800"><b>Gentle Reminder:</b> Do not share passwords, complaint evidence, or other confidential information on social media. Protect your privacy.</div>
         </form>
       </section>
