@@ -5,7 +5,7 @@ const details = '*, category:complaint_categories(*), location:locations(*), rep
 export const complaintService = {
   list: async () => supabase.from('complaints').select(details).order('submitted_at', { ascending: false }),
   get: async (id: string) => supabase.from('complaints').select(details).eq('id', id).single(),
-  create: async (input: { reporter_id: string; title: string; description: string; category_id: string; location_id: string; priority: ComplaintPriority }) =>
+  create: async (input: { reporter_id: string; title: string; description: string; category_id: string; other_category: string | null; location_id: string; priority: ComplaintPriority }) =>
     supabase.from('complaints').insert(input).select().single(),
   updateStatus: async (id: string, status: ComplaintStatus, fields: Partial<Complaint> = {}) =>
     supabase.from('complaints').update({ status, ...fields }).eq('id', id).select().single(),

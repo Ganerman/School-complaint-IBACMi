@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Search } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { complaintService } from '../../services/complaintService'
 import type { Complaint } from '../../types'
@@ -27,7 +27,7 @@ export function ComplaintListPage(){
 
   const shown=items.filter(item=>{
     const reporter=item.reporter
-    const searchable=`${item.title} ${item.complaint_number} ${reporter?.full_name||''} ${reporter?.student_id||''}`.toLowerCase()
+    const searchable=`${item.title} ${item.complaint_number} ${item.other_category||''} ${reporter?.full_name||''} ${reporter?.student_id||''}`.toLowerCase()
     return(!status||item.status===status)&&searchable.includes(q.toLowerCase())
   })
   if(loading)return <LoadingScreen/>
@@ -35,7 +35,7 @@ export function ComplaintListPage(){
   return <div>
     <div className="flex flex-wrap items-end justify-between gap-4"><div><h1 className="display text-4xl">Complaints</h1><p className="mt-2 text-slate-500">Search, review, and track facility reports.</p></div>{profile?.role==='student'&&<Link className="btn-primary" to="/student/complaints/new">New complaint</Link>}</div>
     {loadError&&<div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">{loadError} Check the account role and complaint RLS policies.</div>}
-    <div className="my-6 flex flex-wrap gap-3"><label className="relative min-w-[260px] flex-1"><Search className="absolute left-3 top-3 text-slate-400" size={18}/><input className="input pl-10" placeholder="Search report, name, or School ID" value={q} onChange={e=>setQ(e.target.value)}/></label><select className="input w-auto min-w-44" value={status} onChange={e=>setStatus(e.target.value)}><option value="">All statuses</option>{['submitted','under_review','verified','assigned','in_progress','waiting_for_materials','resolved','closed','rejected','reopened'].map(value=><option key={value} value={value}>{value.replaceAll('_',' ')}</option>)}</select></div>
+    <div className="my-6 flex flex-wrap items-center gap-3"><label className="relative min-w-[260px] flex-1"><span className="sr-only">Search complaints</span><Search className="absolute left-3 top-3 text-slate-400" size={18}/><input className="input pl-10" placeholder="Search report, name, or School ID" value={q} onChange={e=>setQ(e.target.value)}/></label><label><span className="sr-only">Filter by status</span><select className="input w-auto min-w-44" value={status} onChange={e=>setStatus(e.target.value)}><option value="">All statuses</option>{['submitted','under_review','verified','assigned','in_progress','waiting_for_materials','resolved','closed','rejected','reopened'].map(value=><option key={value} value={value}>{value.replaceAll('_',' ')}</option>)}</select></label>{(q||status)&&<button className="btn-secondary" type="button" onClick={()=>{setQ('');setStatus('')}}><X size={17}/>Clear</button>}<span className="text-sm text-slate-500" aria-live="polite">{shown.length} {shown.length===1?'result':'results'}</span></div>
     {shown.length===0?<EmptyState title="No matching complaints" message="No saved complaint matches the current search or filter."/>:<div className="card overflow-x-auto"><table className="w-full min-w-[980px] text-left text-sm"><thead className="border-b bg-slate-50 text-xs uppercase text-slate-400"><tr><th className="px-5 py-4">Report</th><th>Reported by</th><th>Location</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead><tbody>{shown.map(item=>{
       const reporter=item.reporter
       const isTeacher=reporter?.account_type==='teacher'

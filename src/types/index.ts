@@ -33,7 +33,7 @@ export interface Location {
 }
 export interface Complaint {
   id: string; complaint_number: string; reporter_id: string; title: string; description: string
-  category_id: string | null; location_id: string | null; priority: ComplaintPriority
+  category_id: string | null; other_category: string | null; location_id: string | null; priority: ComplaintPriority
   status: ComplaintStatus; assigned_staff_id: string | null; rejection_reason: string | null
   admin_notes: string | null; resolution_details: string | null; materials_used: string | null
   submitted_at: string; verified_at: string | null; assigned_at: string | null; started_at: string | null
@@ -74,4 +74,9 @@ export interface AcademicConcern {
   subject_name:string; description:string; status:AcademicConcernStatus; is_confidential:boolean
   admin_notes:string|null; teacher_response:string|null; meeting_at:string|null; resolution:string|null
   handled_by:string|null; created_at:string; updated_at:string; resolved_at:string|null
+}
+export interface AcademicConcernMessage {
+  id:string; concern_id:string; sender_id:string; sender_name:string
+  sender_role:'admin'|'student'|'teacher'; audience:'student'|'teacher'
+  message:string; created_at:string
 }

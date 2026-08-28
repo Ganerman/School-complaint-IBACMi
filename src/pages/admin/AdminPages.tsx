@@ -5,8 +5,9 @@ import { toast } from 'sonner'
 import { supabase } from '../../lib/supabase'
 import type { Complaint, ComplaintCategory, Location, Profile } from '../../types'
 import { humanize } from '../../utils/format'
+export { ReportsPage } from './ReportsPage'
 export function UsersPage(){const[users,setUsers]=useState<Profile[]>([]);useEffect(()=>{void supabase.from('profiles').select('*').order('created_at',{ascending:false}).then(({data})=>setUsers((data||[]) as Profile[]))},[]);return <div><h1 className="display text-4xl">Users & staff</h1><p className="mt-2 text-slate-500">Account creation and role changes use secured administrator Edge Functions.</p><div className="card mt-7 overflow-x-auto"><table className="w-full min-w-[700px] text-left text-sm"><thead className="border-b bg-slate-50 text-xs uppercase text-slate-400"><tr><th className="px-5 py-4">Name</th><th>Role</th><th>Identifier</th><th>Status</th></tr></thead><tbody>{users.map(u=><tr className="border-b" key={u.id}><td className="px-5 py-4"><b>{u.full_name}</b><small className="block text-slate-400">{u.email}</small></td><td>{humanize(u.role)}</td><td>{u.student_id||u.specialization||'—'}</td><td>{humanize(u.account_status)}</td></tr>)}</tbody></table></div></div>}
-export function ReportsPage(){
+export function LegacyReportsPage(){
   const[items,setItems]=useState<Complaint[]>([])
   const[loading,setLoading]=useState(true)
   const[error,setError]=useState('')

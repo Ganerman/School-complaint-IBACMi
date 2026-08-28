@@ -28,4 +28,8 @@ export default tseslint.config(
     files: ['src/context/AuthContext.tsx'],
     rules: { 'react-refresh/only-export-components': 'off' },
   },
+  {
+    files: ['public/push-sw.js'],
+    languageOptions: { globals: globals.serviceworker },
+  },
 )
