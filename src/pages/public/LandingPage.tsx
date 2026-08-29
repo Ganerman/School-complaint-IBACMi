@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import ceilingLeak from '../../assets/complaints/ceiling-leak.png'
 import maintenanceResponse from '../../assets/complaints/maintenance-response.png'
 import studentReport from '../../assets/complaints/student-report.png'
+import studentTeacherConcern from '../../assets/complaints/student-teacher-concern.png'
 
 export function LandingPage() {
   return <main>
@@ -31,11 +32,12 @@ export function LandingPage() {
           </div>
           <Link className="btn-primary" to="/register">Start a report <ArrowRight size={17}/></Link>
         </div>
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
+        <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {[
             [studentReport,'Report with confidence','Students can document damaged facilities in seconds.','01'],
             [ceilingLeak,'Make concerns visible','Clear photo evidence helps the school assess urgency.','02'],
             [maintenanceResponse,'Follow the response','Assigned teams provide accountable repair updates.','03'],
+            [studentTeacherConcern,'Share academic concerns','Students can privately raise classroom concerns with a teacher.','04'],
           ].map(([image,title,copy,number])=>
             <article className="group overflow-hidden rounded-2xl border bg-[#f6f6f6] shadow-sm" key={title}>
               <div className="relative h-64 overflow-hidden">
