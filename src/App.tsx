@@ -23,6 +23,7 @@ const NewComplaintPage=lazy(()=>import('./pages/complaints/NewComplaintPage').th
 const ComplaintDetailPage=lazy(()=>import('./pages/complaints/ComplaintDetailPage').then(m=>({default:m.ComplaintDetailPage})))
 const NotificationsPage=lazy(()=>import('./pages/notifications/NotificationsPage').then(m=>({default:m.NotificationsPage})))
 const ProfilePage=lazy(()=>import('./pages/profile/ProfilePage').then(m=>({default:m.ProfilePage})))
+const CompleteStudentProfilePage=lazy(()=>import('./pages/profile/CompleteStudentProfilePage').then(m=>({default:m.CompleteStudentProfilePage})))
 const AdminPages=()=>import('./pages/admin/AdminPages')
 const ReportsPage=lazy(()=>AdminPages().then(m=>({default:m.ReportsPage})))
 const SettingsPage=lazy(()=>AdminPages().then(m=>({default:m.SettingsPage})))
@@ -42,7 +43,7 @@ const shared = <>
 export default function App(){return <BrowserRouter><AuthProvider><Suspense fallback={<LoadingScreen/>}><Routes>
   <Route element={<PublicLayout/>}><Route index element={<LandingPage/>}/><Route path="about" element={<AboutPage/>}/><Route path="vision-mission" element={<VisionMissionPage/>}/></Route>
   <Route path="login" element={<LoginPage/>}/><Route path="register" element={<RegisterPage/>}/><Route path="forgot-password" element={<ForgotPasswordPage/>}/><Route path="reset-password" element={<ResetPasswordPage/>}/><Route path="portal" element={<PortalRedirect/>}/>
-  <Route element={<ProtectedRoute roles={['student']}/> }><Route path="student" element={<DashboardLayout/>}>{shared}<Route path="complaints/new" element={<NewComplaintPage/>}/><Route path="academic-concerns" element={<AcademicConcernListPage/>}/><Route path="academic-concerns/new" element={<NewAcademicConcernPage/>}/><Route path="academic-concerns/:id" element={<AcademicConcernDetailPage/>}/><Route index element={<Navigate to="dashboard" replace/>}/></Route></Route>
+  <Route element={<ProtectedRoute roles={['student']} requireCompleteProfile/> }><Route path="student" element={<DashboardLayout/>}>{shared}<Route path="complete-profile" element={<CompleteStudentProfilePage/>}/><Route path="complaints/new" element={<NewComplaintPage/>}/><Route path="academic-concerns" element={<AcademicConcernListPage/>}/><Route path="academic-concerns/new" element={<NewAcademicConcernPage/>}/><Route path="academic-concerns/:id" element={<AcademicConcernDetailPage/>}/><Route index element={<Navigate to="dashboard" replace/>}/></Route></Route>
   <Route element={<ProtectedRoute roles={['maintenance']}/> }><Route path="maintenance" element={<DashboardLayout/>}>{shared}<Route index element={<Navigate to="dashboard" replace/>}/></Route></Route>
   <Route element={<ProtectedRoute roles={['admin']}/> }><Route path="admin" element={<DashboardLayout/>}>{shared}<Route path="users" element={<UsersPage/>}/><Route path="reports" element={<ReportsPage/>}/><Route path="settings" element={<SettingsPage/>}/><Route path="academic-concerns" element={<AcademicConcernListPage/>}/><Route path="academic-concerns/:id" element={<AcademicConcernDetailPage/>}/><Route index element={<Navigate to="dashboard" replace/>}/></Route></Route>
   <Route path="*" element={<Navigate to="/" replace/>}/>
