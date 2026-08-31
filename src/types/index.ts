@@ -35,7 +35,7 @@ export interface Complaint {
   id: string; complaint_number: string; reporter_id: string; title: string; description: string
   category_id: string | null; other_category: string | null; location_id: string | null; priority: ComplaintPriority
   status: ComplaintStatus; assigned_staff_id: string | null; rejection_reason: string | null
-  admin_notes: string | null; resolution_details: string | null; materials_used: string | null
+  admin_notes: string | null; maintenance_notes: string | null; resolution_details: string | null; materials_used: string | null
   submitted_at: string; verified_at: string | null; assigned_at: string | null; started_at: string | null
   estimated_completion_at: string | null; resolved_at: string | null; closed_at: string | null
   sla_deadline: string; reopened_at: string | null; created_at: string; updated_at: string
