@@ -1,5 +1,6 @@
-import { ArrowRight, BarChart3, BellRing, CheckCircle2, ClipboardCheck, ShieldCheck, Wrench } from 'lucide-react'
+import { ArrowRight, BarChart3, CheckCircle2, ClipboardCheck, ShieldCheck, Wrench } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { CampusMomentsGlobe } from '../../components/public/ResolvedComplaintGlobe'
 import ceilingLeak from '../../assets/complaints/ceiling-leak.png'
 import maintenanceResponse from '../../assets/complaints/maintenance-response.png'
 import studentReport from '../../assets/complaints/student-report.png'
@@ -16,10 +17,7 @@ export function LandingPage() {
           <div className="mt-9 flex flex-wrap gap-3"><Link className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 font-bold text-forest-900 hover:bg-amber-300" to="/register">Report a concern <ArrowRight size={18}/></Link><Link className="rounded-xl border border-forest-200 bg-white px-5 py-3 font-semibold text-forest-800 hover:bg-forest-50" to="/login">Track my report</Link></div>
           <div className="mt-10 flex flex-wrap gap-6 text-sm text-slate-500">{['Secure reporting','Live updates','Transparent resolution'].map(x=><span className="flex items-center gap-2" key={x}><CheckCircle2 className="text-forest-600" size={17}/>{x}</span>)}</div>
         </div>
-        <div className="relative hidden lg:block">
-          <div className="rounded-[2rem] border border-forest-100 bg-forest-900 p-5 shadow-2xl"><div className="rounded-2xl bg-[#f6f6f6] p-5 text-slate-800"><div className="flex items-center justify-between"><div><small className="font-semibold text-slate-400">COMPLAINT OVERVIEW</small><h3 className="mt-1 text-lg font-bold">Campus today</h3></div><BellRing className="text-forest-700"/></div><div className="mt-5 grid grid-cols-2 gap-3">{[['12','Open reports'],['8','In progress'],['24','Resolved'],['94%','Resolution rate']].map(([v,l])=><div className="rounded-xl border bg-white p-4" key={l}><b className="text-2xl text-forest-800">{v}</b><p className="text-xs text-slate-500">{l}</p></div>)}</div><div className="mt-4 rounded-xl border bg-white p-4"><div className="flex justify-between text-sm"><b>Library A/C repair</b><span className="text-amber-600">In progress</span></div><div className="mt-3 h-2 rounded-full bg-slate-100"><div className="h-full w-2/3 rounded-full bg-forest-600"/></div></div></div></div>
-          <div className="absolute -bottom-8 -left-10 flex items-center gap-3 rounded-2xl bg-white p-4 text-slate-800 shadow-xl"><span className="rounded-xl bg-forest-50 p-2 text-forest-700"><CheckCircle2/></span><div><b className="block text-sm">Issue resolved</b><small className="text-slate-400">Science Lab · just now</small></div></div>
-        </div>
+        <CampusMomentsGlobe />
       </div>
     </section>
     <section className="border-y border-slate-200 bg-white">

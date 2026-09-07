@@ -67,6 +67,19 @@ export interface AuditLog {
   id: string; user_id: string | null; action: string; description: string | null
   record_type: string | null; record_id: string | null; metadata: Record<string, unknown> | null; created_at: string
 }
+export interface CampusMoment {
+  id: string
+  title: string
+  caption: string | null
+  event_date: string | null
+  storage_path: string
+  is_published: boolean
+  display_order: number
+  uploaded_by: string
+  created_at: string
+  updated_at: string
+  image_url?: string
+}
 export type AcademicConcernStatus = 'submitted'|'under_review'|'teacher_notified'|'meeting_scheduled'|'teacher_responded'|'resolved'|'escalated'|'dismissed'
 export interface AcademicConcern {
   id:string; concern_number:string; reporter_id:string; teacher_id:string; teacher_name:string

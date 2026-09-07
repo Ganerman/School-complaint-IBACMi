@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Bell, ChartNoAxesCombined, ClipboardList, FilePlus2, GraduationCap, LayoutDashboard, LogOut, Menu, Settings, UserRound, Users, Wrench, X } from 'lucide-react'
+import { Bell, ChartNoAxesCombined, ClipboardList, FilePlus2, GraduationCap, Images, LayoutDashboard, LogOut, Menu, Settings, UserRound, Users, Wrench, X } from 'lucide-react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { authService } from '../services/authService'
@@ -14,7 +14,7 @@ import { pushNotificationService } from '../services/pushNotificationService'
 const menus = {
   student: [[LayoutDashboard,'Dashboard','dashboard'],[FilePlus2,'Facility complaint','complaints/new'],[ClipboardList,'My facility complaints','complaints'],[GraduationCap,'Academic concerns','academic-concerns'],[Bell,'Notifications','notifications'],[UserRound,'Profile','profile']],
   maintenance: [[LayoutDashboard,'Dashboard','dashboard'],[Wrench,'Assigned complaints','complaints'],[Bell,'Notifications','notifications'],[UserRound,'Profile','profile']],
-  admin: [[LayoutDashboard,'Dashboard','dashboard'],[ClipboardList,'Facility complaints','complaints'],[GraduationCap,'Academic concerns','academic-concerns'],[Users,'Users & staff','users'],[ChartNoAxesCombined,'Reports & SLA','reports'],[Settings,'System setup','settings'],[Bell,'Notifications','notifications'],[UserRound,'Profile','profile']],
+  admin: [[LayoutDashboard,'Dashboard','dashboard'],[ClipboardList,'Facility complaints','complaints'],[GraduationCap,'Academic concerns','academic-concerns'],[Images,'Campus moments','campus-moments'],[Users,'Users & staff','users'],[ChartNoAxesCombined,'Reports & SLA','reports'],[Settings,'System setup','settings'],[Bell,'Notifications','notifications'],[UserRound,'Profile','profile']],
 } as const
 
 export function DashboardLayout() {

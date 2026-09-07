@@ -28,6 +28,7 @@ const AdminPages=()=>import('./pages/admin/AdminPages')
 const ReportsPage=lazy(()=>AdminPages().then(m=>({default:m.ReportsPage})))
 const SettingsPage=lazy(()=>AdminPages().then(m=>({default:m.SettingsPage})))
 const UsersPage=lazy(()=>import('./pages/admin/UsersPage').then(m=>({default:m.UsersPage})))
+const CampusMomentsPage=lazy(()=>import('./pages/admin/CampusMomentsPage').then(m=>({default:m.CampusMomentsPage})))
 const AcademicPages=()=>import('./pages/academic/AcademicConcernPages')
 const AcademicConcernListPage=lazy(()=>AcademicPages().then(m=>({default:m.AcademicConcernListPage})))
 const NewAcademicConcernPage=lazy(()=>AcademicPages().then(m=>({default:m.NewAcademicConcernPage})))
@@ -45,6 +46,6 @@ export default function App(){return <BrowserRouter><AuthProvider><Suspense fall
   <Route path="login" element={<LoginPage/>}/><Route path="register" element={<RegisterPage/>}/><Route path="forgot-password" element={<ForgotPasswordPage/>}/><Route path="reset-password" element={<ResetPasswordPage/>}/><Route path="portal" element={<PortalRedirect/>}/>
   <Route element={<ProtectedRoute roles={['student']} requireCompleteProfile/> }><Route path="student" element={<DashboardLayout/>}>{shared}<Route path="complete-profile" element={<CompleteStudentProfilePage/>}/><Route path="complaints/new" element={<NewComplaintPage/>}/><Route path="academic-concerns" element={<AcademicConcernListPage/>}/><Route path="academic-concerns/new" element={<NewAcademicConcernPage/>}/><Route path="academic-concerns/:id" element={<AcademicConcernDetailPage/>}/><Route index element={<Navigate to="dashboard" replace/>}/></Route></Route>
   <Route element={<ProtectedRoute roles={['maintenance']}/> }><Route path="maintenance" element={<DashboardLayout/>}>{shared}<Route index element={<Navigate to="dashboard" replace/>}/></Route></Route>
-  <Route element={<ProtectedRoute roles={['admin']}/> }><Route path="admin" element={<DashboardLayout/>}>{shared}<Route path="users" element={<UsersPage/>}/><Route path="reports" element={<ReportsPage/>}/><Route path="settings" element={<SettingsPage/>}/><Route path="academic-concerns" element={<AcademicConcernListPage/>}/><Route path="academic-concerns/:id" element={<AcademicConcernDetailPage/>}/><Route index element={<Navigate to="dashboard" replace/>}/></Route></Route>
+  <Route element={<ProtectedRoute roles={['admin']}/> }><Route path="admin" element={<DashboardLayout/>}>{shared}<Route path="users" element={<UsersPage/>}/><Route path="campus-moments" element={<CampusMomentsPage/>}/><Route path="reports" element={<ReportsPage/>}/><Route path="settings" element={<SettingsPage/>}/><Route path="academic-concerns" element={<AcademicConcernListPage/>}/><Route path="academic-concerns/:id" element={<AcademicConcernDetailPage/>}/><Route index element={<Navigate to="dashboard" replace/>}/></Route></Route>
   <Route path="*" element={<Navigate to="/" replace/>}/>
  </Routes></Suspense><Toaster richColors position="top-right"/></AuthProvider></BrowserRouter>}

@@ -1,0 +1,285 @@
+Enum user_role {
+  student
+  maintenance
+  admin
+}
+
+Enum complaint_priority {
+  low
+  medium
+  high
+  emergency
+}
+
+Enum complaint_status {
+  submitted
+  under_review
+  verified
+  assigned
+  in_progress
+  waiting_for_materials
+  resolved
+  closed
+  rejected
+  reopened
+}
+
+Enum photo_kind {
+  before
+  progress
+  after
+}
+
+Enum academic_concern_status {
+  submitted
+  under_review
+  teacher_notified
+  meeting_scheduled
+  teacher_responded
+  resolved
+  escalated
+  dismissed
+}
+
+Table auth_users {
+  id uuid [pk]
+}
+
+Table profiles {
+  id uuid [pk, ref: - auth_users.id]
+  student_id text [unique]
+  full_name text [not null]
+  email text
+  contact_number text
+  course text
+  year_level text
+  role user_role [not null, default: 'student']
+  account_type text [not null, note: 'student, teacher, or staff']
+  specialization text
+  department text
+  account_status text [not null, note: 'active or inactive']
+  verification_status text [not null, note: 'pending, approved, or rejected']
+  avatar_url text
+  must_change_password boolean
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+Table complaint_categories {
+  id uuid [pk]
+  name text [not null, unique]
+  description text
+  is_active boolean
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+Table locations {
+  id uuid [pk]
+  building text [not null]
+  floor text
+  room text
+  location_description text
+  is_active boolean
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+Table complaint_year_sequences {
+  year int [pk]
+  last_value bigint [not null]
+}
+
+Table complaints {
+  id uuid [pk]
+  complaint_number text [not null, unique]
+  reporter_id uuid [not null]
+  title text [not null]
+  description text [not null]
+  category_id uuid
+  location_id uuid
+  priority complaint_priority [not null, default: 'medium']
+  status complaint_status [not null, default: 'submitted']
+  assigned_staff_id uuid
+  other_category text
+  rejection_reason text
+  admin_notes text
+  maintenance_notes text
+  resolution_details text
+  materials_used text
+  submitted_at timestamptz
+  verified_at timestamptz
+  assigned_at timestamptz
+  started_at timestamptz
+  estimated_completion_at timestamptz
+  resolved_at timestamptz
+  closed_at timestamptz
+  sla_deadline timestamptz
+  reopened_at timestamptz
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+Table complaint_status_history {
+  id uuid [pk]
+  complaint_id uuid [not null]
+  previous_status complaint_status
+  new_status complaint_status [not null]
+  changed_by uuid
+  notes text
+  created_at timestamptz
+}
+
+Table complaint_photos {
+  id uuid [pk]
+  complaint_id uuid [not null]
+  uploaded_by uuid [not null]
+  photo_type photo_kind [not null]
+  storage_path text [not null, unique]
+  file_name text
+  file_size bigint
+  mime_type text
+  created_at timestamptz
+}
+
+Table maintenance_assignments {
+  id uuid [pk]
+  complaint_id uuid [not null]
+  staff_id uuid [not null]
+  assigned_by uuid [not null]
+  assignment_notes text
+  status text
+  assigned_at timestamptz
+  accepted_at timestamptz
+  completed_at timestamptz
+}
+
+Table notifications {
+  id uuid [pk]
+  user_id uuid [not null]
+  title text [not null]
+  message text [not null]
+  notification_type text
+  reference_id uuid [note: 'Polymorphic reference']
+  is_read boolean
+  created_at timestamptz
+}
+
+Table feedback {
+  id uuid [pk]
+  complaint_id uuid [not null, unique]
+  user_id uuid [not null]
+  rating int [not null]
+  comments text
+  created_at timestamptz
+}
+
+Table audit_logs {
+  id uuid [pk]
+  user_id uuid
+  action text [not null]
+  description text
+  record_type text
+  record_id uuid [note: 'Polymorphic reference']
+  metadata jsonb
+  created_at timestamptz
+}
+
+Table complaint_comments {
+  id uuid [pk]
+  complaint_id uuid [not null]
+  user_id uuid [not null]
+  comment text [not null]
+  is_internal boolean
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+Table system_settings {
+  id uuid [pk]
+  setting_key text [not null, unique]
+  setting_value jsonb
+  description text
+  updated_by uuid
+  updated_at timestamptz
+}
+
+Table academic_concerns {
+  id uuid [pk]
+  concern_number text [not null, unique]
+  reporter_id uuid [not null]
+  teacher_id uuid [not null]
+  teacher_name text [not null]
+  concern_type text [not null]
+  subject_name text [not null]
+  description text [not null]
+  status academic_concern_status [not null, default: 'submitted']
+  is_confidential boolean [not null]
+  admin_notes text
+  teacher_response text
+  meeting_at timestamptz
+  resolution text
+  handled_by uuid
+  created_at timestamptz
+  updated_at timestamptz
+  resolved_at timestamptz
+}
+
+Table academic_concern_messages {
+  id uuid [pk]
+  concern_id uuid [not null]
+  sender_id uuid [not null]
+  sender_name text [not null]
+  sender_role text [not null]
+  audience text [not null]
+  message text [not null]
+  created_at timestamptz
+}
+
+Table push_subscriptions {
+  id uuid [pk]
+  user_id uuid [not null]
+  endpoint text [not null, unique]
+  p256dh text [not null]
+  auth text [not null]
+  user_agent text
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+Table push_deliveries {
+  notification_id uuid [not null]
+  subscription_id uuid [not null]
+  created_at timestamptz
+
+  indexes {
+    (notification_id, subscription_id) [pk]
+  }
+}
+
+Ref: profiles.id < complaints.reporter_id
+Ref: profiles.id < complaints.assigned_staff_id
+Ref: complaint_categories.id < complaints.category_id
+Ref: locations.id < complaints.location_id
+Ref: complaints.id < complaint_status_history.complaint_id
+Ref: profiles.id < complaint_status_history.changed_by
+Ref: complaints.id < complaint_photos.complaint_id
+Ref: profiles.id < complaint_photos.uploaded_by
+Ref: complaints.id < maintenance_assignments.complaint_id
+Ref: profiles.id < maintenance_assignments.staff_id
+Ref: profiles.id < maintenance_assignments.assigned_by
+Ref: profiles.id < notifications.user_id
+Ref: complaints.id - feedback.complaint_id
+Ref: profiles.id < feedback.user_id
+Ref: profiles.id < audit_logs.user_id
+Ref: complaints.id < complaint_comments.complaint_id
+Ref: profiles.id < complaint_comments.user_id
+Ref: profiles.id < system_settings.updated_by
+Ref: profiles.id < academic_concerns.reporter_id
+Ref: profiles.id < academic_concerns.teacher_id
+Ref: profiles.id < academic_concerns.handled_by
+Ref: academic_concerns.id < academic_concern_messages.concern_id
+Ref: profiles.id < academic_concern_messages.sender_id
+Ref: profiles.id < push_subscriptions.user_id
+Ref: notifications.id < push_deliveries.notification_id
+Ref: push_subscriptions.id < push_deliveries.subscription_id
