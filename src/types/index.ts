@@ -80,16 +80,3 @@ export interface CampusMoment {
   updated_at: string
   image_url?: string
 }
-export type AcademicConcernStatus = 'submitted'|'under_review'|'teacher_notified'|'meeting_scheduled'|'teacher_responded'|'resolved'|'escalated'|'dismissed'
-export interface AcademicConcern {
-  id:string; concern_number:string; reporter_id:string; teacher_id:string; teacher_name:string
-  concern_type:'grade_clarification'|'missing_score'|'attendance'|'classroom_concern'|'conduct'|'other'
-  subject_name:string; description:string; status:AcademicConcernStatus; is_confidential:boolean
-  admin_notes:string|null; teacher_response:string|null; meeting_at:string|null; resolution:string|null
-  handled_by:string|null; created_at:string; updated_at:string; resolved_at:string|null
-}
-export interface AcademicConcernMessage {
-  id:string; concern_id:string; sender_id:string; sender_name:string
-  sender_role:'admin'|'student'|'teacher'; audience:'student'|'teacher'
-  message:string; created_at:string
-}

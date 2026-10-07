@@ -1,14 +1,17 @@
 import { supabase } from "../lib/supabase";
 import type { Complaint, ComplaintPriority, ComplaintStatus } from "../types";
+import { readAllRows } from '../utils/pagination';
 
 const details =
   "*, category:complaint_categories(*), location:locations(*), reporter:profiles!complaints_reporter_id_fkey(id,full_name,student_id,email,contact_number,account_type,avatar_url), assigned_staff:profiles!complaints_assigned_staff_id_fkey(id,full_name,specialization)";
 export const complaintService = {
-  list: async () =>
+  list: async () => readAllRows((from, to) =>
     supabase
       .from("complaints")
       .select(details)
-      .order("submitted_at", { ascending: false }),
+      .order("submitted_at", { ascending: false })
+      .order('id')
+      .range(from, to)),
   get: async (id: string) =>
     supabase.from("complaints").select(details).eq("id", id).single(),
   create: async (input: {

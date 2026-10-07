@@ -4,7 +4,6 @@ import {
   Clock3,
   MapPin,
   MessageSquare,
-  Upload,
   XCircle,
 } from "lucide-react";
 import { useParams } from "react-router-dom";
@@ -17,7 +16,6 @@ import { complaintService } from "../../services/complaintService";
 import {
   deleteComplaintPhoto,
   signedPhotoUrl,
-  uploadComplaintPhoto,
 } from "../../services/storageService";
 import type {
   Complaint,
@@ -29,6 +27,8 @@ import type {
   Profile,
 } from "../../types";
 import { formatDate, humanize, slaText } from "../../utils/format";
+import { ComplaintProgress } from "../../components/complaints/ComplaintProgress";
+import { ComplaintPhotoUpload } from "../../components/complaints/ComplaintPhotoUpload";
 const nextByRole: {
   [k: string]: { label: string; status: ComplaintStatus }[];
 } = {
@@ -57,50 +57,53 @@ export function ComplaintDetailPage() {
   >("");
   const [rating, setRating] = useState(5);
   const [comments, setComments] = useState("");
-  const [uploadingType, setUploadingType] = useState<
-    "progress" | "after" | null
-  >(null);
-  const [uploadError, setUploadError] = useState("");
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
   const load = useCallback(async () => {
     if (!id) return;
-    const [{ data, error }, { data: h }, { data: p }, { data: f }] =
-      await Promise.all([
-        complaintService.get(id),
-        supabase
-          .from("complaint_status_history")
-          .select("*")
-          .eq("complaint_id", id)
-          .order("created_at"),
-        supabase
-          .from("complaint_photos")
-          .select("*")
-          .eq("complaint_id", id)
-          .order("created_at"),
-        supabase
-          .from("feedback")
-          .select("*")
-          .eq("complaint_id", id)
-          .maybeSingle(),
-      ]);
-    if (error) {
-      setError(
-        "This complaint is unavailable or you do not have permission to view it.",
+    setError("");
+    try {
+      const [{ data, error }, { data: h }, { data: p }, { data: f }] =
+        await Promise.all([
+          complaintService.get(id),
+          supabase
+            .from("complaint_status_history")
+            .select("*")
+            .eq("complaint_id", id)
+            .order("created_at"),
+          supabase
+            .from("complaint_photos")
+            .select("*")
+            .eq("complaint_id", id)
+            .order("created_at"),
+          supabase
+            .from("feedback")
+            .select("*")
+            .eq("complaint_id", id)
+            .maybeSingle(),
+        ]);
+      if (error) {
+        setError(
+          "This complaint is unavailable or you do not have permission to view it.",
+        );
+        setLoading(false);
+        return;
+      }
+      setItem(data as unknown as Complaint);
+      setHistory((h || []) as ComplaintStatusHistory[]);
+      setFeedback(f as Feedback | null);
+      const resolved = await Promise.all(
+        ((p || []) as ComplaintPhoto[]).map(async (x) => ({
+          ...x,
+          signed_url: (await signedPhotoUrl(x.storage_path)).data?.signedUrl,
+        })),
       );
+      setPhotos(resolved);
+    } catch (error) {
+      console.error("Complaint could not be loaded", error);
+      setError("We could not load this complaint. Check your connection and try again.");
+    } finally {
       setLoading(false);
-      return;
     }
-    setItem(data as unknown as Complaint);
-    setHistory((h || []) as ComplaintStatusHistory[]);
-    setFeedback(f as Feedback | null);
-    const resolved = await Promise.all(
-      ((p || []) as ComplaintPhoto[]).map(async (x) => ({
-        ...x,
-        signed_url: (await signedPhotoUrl(x.storage_path)).data?.signedUrl,
-      })),
-    );
-    setPhotos(resolved);
-    setLoading(false);
   }, [id]);
   useEffect(() => {
     void load();
@@ -114,7 +117,7 @@ export function ComplaintDetailPage() {
   }, [load, profile?.role]);
   if (loading) return <LoadingScreen />;
   if (error || !item)
-    return <ErrorState message={error || "Complaint not found."} />;
+    return <div className="space-y-4"><ErrorState message={error || "Complaint not found."} /><button className="btn-secondary" onClick={() => { setLoading(true); void load(); }}>Retry loading complaint</button></div>;
   const hasAfterPhoto = photos.some((photo) => photo.photo_type === "after");
   const allowed = (status: ComplaintStatus) => {
     const s = item.status;
@@ -193,41 +196,10 @@ export function ComplaintDetailPage() {
     const { error } = await complaintService.updatePriority(item!.id, priority);
     if (error) {
       console.error("Priority update failed", error);
-      return toast.error(error.message || "Unable to update complaint priority.");
+      return toast.error("We could not update the priority. Please try again. If it keeps failing, contact the school office.");
     }
     toast.success("Priority updated.");
     void load();
-  }
-  async function upload(file?: File, type: "progress" | "after" = "progress") {
-    if (!file || !user) return;
-    setUploadingType(type);
-    setUploadError("");
-    try {
-      const { error } = await uploadComplaintPhoto(
-        file,
-        item!.id,
-        user.id,
-        type,
-      );
-      if (error) {
-        setUploadError(
-          "Upload failed. Check your connection and try the photo again.",
-        );
-        return toast.error("Photo upload failed. Please try again.");
-      }
-      toast.success(
-        type === "after"
-          ? "After-repair photo uploaded successfully."
-          : "Progress photo uploaded successfully.",
-      );
-      await load();
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Photo upload failed.";
-      setUploadError(message);
-      toast.error(message);
-    } finally {
-      setUploadingType(null);
-    }
   }
   async function removePhoto(photo: ComplaintPhoto) {
     if (!confirm(`Remove this ${photo.photo_type} photo?`)) return;
@@ -236,7 +208,7 @@ export function ComplaintDetailPage() {
     setDeletingPhotoId(null);
     if (error)
       return toast.error(
-        "Photo could not be removed. Apply the latest Supabase SQL update and try again.",
+        "We could not remove this photo. Please try again. If it keeps failing, contact the school office.",
       );
     toast.success("Photo removed.");
     await load();
@@ -266,13 +238,14 @@ export function ComplaintDetailPage() {
         <div className="rounded-xl border bg-white p-3 text-sm">
           <span className="flex items-center gap-2 font-semibold">
             <Clock3 size={17} />
-            {slaText(item.sla_deadline, item.status)}
+            {item.status === "rejected" ? "Deadline not applicable" : slaText(item.sla_deadline, item.status)}
           </span>
           <small className="mt-1 block text-slate-400">
-            {formatDate(item.sla_deadline)}
+            {item.status === "rejected" ? "This report was not approved." : formatDate(item.sla_deadline)}
           </small>
         </div>
       </div>
+      <ComplaintProgress complaint={item} role={profile?.role || "student"} />
       <div className="mt-7 grid gap-6 xl:grid-cols-[1fr_360px]">
         <div className="space-y-6">
           <section className="card p-6">
@@ -341,7 +314,7 @@ export function ComplaintDetailPage() {
                       ].includes(item.status) && (
                         <button
                           type="button"
-                          className="absolute right-3 top-3 z-10 grid h-10 w-10 place-items-center rounded-full bg-red-600 text-white shadow-lg transition hover:bg-red-700"
+                          className="btn-icon btn-icon-danger absolute right-3 top-3 z-10"
                           onClick={() => removePhoto(p)}
                           disabled={deletingPhotoId === p.id}
                           aria-label={`Remove ${p.photo_type} photo`}
@@ -390,34 +363,25 @@ export function ComplaintDetailPage() {
               </div>
             )}
           </section>
-          {profile?.role === "maintenance" && (
-            <section className="card p-6">
+          {profile?.role === "student" && user?.id === item.reporter_id && !["resolved", "closed", "rejected"].includes(item.status) && (
+            <section className="card space-y-4 p-6" aria-label="Add complaint photos">
+              <div><h2 className="font-bold">Add complaint photos</h2><p className="mt-1 text-sm text-slate-500">Add missing photos to this report. You do not need to submit another complaint.</p></div>
+              <ComplaintPhotoUpload key={`${item.id}-${user.id}-before`} complaintId={item.id} userId={user.id} type="before" onUploaded={load} />
+            </section>
+          )}
+          {profile?.role === "maintenance" && user?.id === item.assigned_staff_id && ["assigned", "in_progress", "waiting_for_materials", "reopened"].includes(item.status) && (
+            <section id="repair-evidence" className="card scroll-mt-24 p-6">
               <h2 className="font-bold">Upload repair evidence</h2>
               <p className="mt-1 text-sm text-slate-500">
                 Upload progress photos while working. An after-repair photo is
                 required before completion.
               </p>
-              <div className="mt-4 flex flex-wrap gap-3">
+              <div className="mt-5 space-y-6">
                 {(["progress", "after"] as const).map((type) => (
-                  <label
-                    key={type}
-                    className={`btn-secondary cursor-pointer ${uploadingType ? "pointer-events-none opacity-60" : ""}`}
-                  >
-                    <Upload size={17} />
-                    {uploadingType === type
-                      ? "Uploading…"
-                      : `Upload ${type} photo`}
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      className="hidden"
-                      disabled={uploadingType !== null}
-                      onChange={(e) => {
-                        void upload(e.target.files?.[0], type);
-                        e.currentTarget.value = "";
-                      }}
-                    />
-                  </label>
+                  <section key={`${item.id}-${user.id}-${type}`} aria-label={`${humanize(type)} photos`} className="space-y-3 border-t pt-4">
+                    <h3 className="text-sm font-bold">{type === "after" ? "After-repair photos" : "Progress photos"}</h3>
+                    <ComplaintPhotoUpload complaintId={item.id} userId={user.id} type={type} onUploaded={load} />
+                  </section>
                 ))}
               </div>
               <p
@@ -431,15 +395,6 @@ export function ComplaintDetailPage() {
                 After-repair photo:{" "}
                 {hasAfterPhoto ? "successfully uploaded" : "not uploaded yet"}
               </p>
-              {uploadError && (
-                <p
-                  role="alert"
-                  className="mt-2 flex items-center gap-2 text-sm font-medium text-red-600"
-                >
-                  <XCircle size={17} />
-                  {uploadError}
-                </p>
-              )}
             </section>
           )}
           {profile?.role === "student" &&
@@ -450,7 +405,10 @@ export function ComplaintDetailPage() {
                 <div className="mt-4 flex gap-2">
                   {[1, 2, 3, 4, 5].map((x) => (
                     <button
-                      className={`h-10 w-10 rounded-full ${rating === x ? "bg-amber-400 font-bold" : "bg-slate-100"}`}
+                      type="button"
+                      aria-label={`Rate ${x} out of 5`}
+                      aria-pressed={rating === x}
+                      className={`${rating === x ? "btn-accent" : "btn-secondary"} w-11 px-0`}
                       onClick={() => setRating(x)}
                       key={x}
                     >
@@ -574,32 +532,7 @@ export function ComplaintDetailPage() {
                       {notes.trim() ? "added" : "required"}
                     </p>
                     {!hasAfterPhoto && (
-                      <label
-                        className={`btn-secondary mt-2 w-full cursor-pointer ${uploadingType ? "pointer-events-none opacity-60" : ""}`}
-                      >
-                        <Upload size={17} />
-                        {uploadingType === "after"
-                          ? "Uploading after photo…"
-                          : "Try upload after photo"}
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp"
-                          className="hidden"
-                          disabled={uploadingType !== null}
-                          onChange={(e) => {
-                            void upload(e.target.files?.[0], "after");
-                            e.currentTarget.value = "";
-                          }}
-                        />
-                      </label>
-                    )}
-                    {uploadError && (
-                      <p
-                        role="alert"
-                        className="text-xs font-medium text-red-600"
-                      >
-                        {uploadError}
-                      </p>
+                      <a className="btn-secondary mt-2 w-full" href="#repair-evidence">Add after-repair photos above</a>
                     )}
                   </div>
                 )}
@@ -635,7 +568,7 @@ export function ComplaintDetailPage() {
                     .map((x) => (
                       <button
                         key={x.status}
-                        className="btn-primary"
+                        className={x.status === "rejected" ? "btn-danger" : "btn-primary"}
                         onClick={() => change(x.status)}
                       >
                         {x.label}

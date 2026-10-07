@@ -43,6 +43,7 @@ export function SettingsPage(){
   const[cats,setCats]=useState<ComplaintCategory[]>([])
   const[locations,setLocations]=useState<Location[]>([])
   const[name,setName]=useState('')
+  const[editingCategoryId,setEditingCategoryId]=useState<string|null>(null)
   const[locationForm,setLocationForm]=useState<LocationForm>(emptyLocation)
   const[editingLocationId,setEditingLocationId]=useState<string|null>(null)
   const[showLocationForm,setShowLocationForm]=useState(false)
@@ -58,13 +59,47 @@ export function SettingsPage(){
   }
   useEffect(()=>{void load()},[])
 
-  async function add(){
-    if(!name.trim())return
-    const{error}=await supabase.from('complaint_categories').insert({name:name.trim()})
-    if(error)toast.error('Could not add category.')
-    else toast.success('Category added.')
-    if(!error)setName('')
-    void load()
+  async function saveCategory(){
+    const trimmed = name.trim()
+    if(!trimmed)return toast.error('Category name is required.')
+    const result = editingCategoryId
+      ? await supabase.from('complaint_categories').update({ name: trimmed }).eq('id', editingCategoryId)
+      : await supabase.from('complaint_categories').insert({ name: trimmed })
+    if(result.error){
+      const duplicate = result.error.code === '23505'
+      toast.error(duplicate ? 'That category already exists.' : editingCategoryId ? 'Could not update category.' : 'Could not add category.')
+      return
+    }
+    toast.success(editingCategoryId ? 'Category updated.' : 'Category added.')
+    setName('')
+    setEditingCategoryId(null)
+    await load()
+  }
+
+  async function deleteCategory(category: ComplaintCategory){
+    const confirmed = window.confirm(`Delete "${category.name}"? This may affect existing complaints using it.`)
+    if(!confirmed) return
+    const { error } = await supabase.from('complaint_categories').delete().eq('id', category.id)
+    if(error){
+      toast.error('Could not delete category.')
+      return
+    }
+    toast.success('Category deleted.')
+    if(editingCategoryId === category.id){
+      setName('')
+      setEditingCategoryId(null)
+    }
+    await load()
+  }
+
+  function startEditCategory(category: ComplaintCategory){
+    setEditingCategoryId(category.id)
+    setName(category.name)
+  }
+
+  function cancelCategoryEdit(){
+    setEditingCategoryId(null)
+    setName('')
   }
 
   function openNewLocation(){
@@ -121,15 +156,21 @@ export function SettingsPage(){
     <div className="mt-7 grid gap-6 lg:grid-cols-2">
       <section className="card p-6">
         <h2 className="font-bold">Categories</h2>
-        <div className="mt-4 flex gap-2"><input className="input" value={name} onChange={e=>setName(e.target.value)} placeholder="New category"/><button className="btn-primary" onClick={add} aria-label="Add category"><Plus/></button></div>
-        <div className="mt-4 divide-y">{cats.map(c=><p className="py-3 text-sm" key={c.id}>{c.name}</p>)}</div>
+        <div className="mt-4 flex gap-2">
+          <input className="input" value={name} onChange={e=>setName(e.target.value)} placeholder={editingCategoryId ? 'Edit category name' : 'New category'} />
+          <button className="btn-primary shrink-0 px-3" onClick={saveCategory} aria-label={editingCategoryId ? 'Save category' : 'Add category'}>
+            {editingCategoryId ? 'Save' : <Plus size={18}/>} 
+          </button>
+          {editingCategoryId && <button className="btn-secondary shrink-0 px-3" onClick={cancelCategoryEdit}>Cancel</button>}
+        </div>
+        <div className="mt-4 divide-y">{cats.map(c=><div className="flex items-center justify-between gap-3 py-3" key={c.id}><p className="text-sm">{c.name}</p><div className="flex gap-2"><button className="btn-secondary btn-sm shrink-0" onClick={()=>startEditCategory(c)} aria-label={`Edit ${c.name}`}><Pencil size={15}/>Edit</button><button className="btn-secondary btn-sm shrink-0 text-red-600 hover:bg-red-50" onClick={()=>deleteCategory(c)} aria-label={`Delete ${c.name}`}><X size={15}/>Delete</button></div></div>)}</div>
       </section>
 
       <section className="card p-6">
         <div className="flex items-center justify-between gap-3"><h2 className="font-bold">Locations</h2><button className="btn-primary" onClick={openNewLocation}><Plus size={17}/>Add location</button></div>
 
         {showLocationForm&&<form className="mt-5 grid gap-4 rounded-xl border bg-slate-50 p-4" onSubmit={saveLocation}>
-          <div className="flex items-center justify-between"><h3 className="font-semibold">{editingLocationId?'Edit location':'New location'}</h3><button type="button" className="rounded-lg p-1.5 text-slate-400 hover:bg-white hover:text-slate-700" onClick={closeLocationForm} aria-label="Close location form"><X size={18}/></button></div>
+          <div className="flex items-center justify-between"><h3 className="font-semibold">{editingLocationId?'Edit location':'New location'}</h3><button type="button" className="btn-icon btn-icon-sm" onClick={closeLocationForm} aria-label="Close location form"><X size={18}/></button></div>
           <div><label className="label">Building</label><input className="input" required value={locationForm.building} onChange={e=>setLocationForm({...locationForm,building:e.target.value})} placeholder="e.g. Main Building"/></div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div><label className="label">Floor</label><input className="input" value={locationForm.floor} onChange={e=>setLocationForm({...locationForm,floor:e.target.value})} placeholder="e.g. Second Floor"/></div>
@@ -140,7 +181,7 @@ export function SettingsPage(){
           <div className="flex justify-end gap-2"><button type="button" className="btn-secondary" onClick={closeLocationForm}>Cancel</button><button className="btn-primary" disabled={savingLocation}>{savingLocation?'Saving…':editingLocationId?'Save changes':'Add location'}</button></div>
         </form>}
 
-        <div className="mt-4 divide-y">{locations.map(location=><div className="flex items-center justify-between gap-4 py-3" key={location.id}><p className={`min-w-0 text-sm ${location.is_active?'':'opacity-50'}`}><b>{location.building}</b>{location.floor&&<> · {location.floor}</>}{location.room&&<> {location.room}</>}{!location.is_active&&<small className="ml-2 rounded-full bg-slate-100 px-2 py-1">Inactive</small>}</p><button className="btn-secondary shrink-0 px-3 py-2" onClick={()=>openEditLocation(location)} aria-label={`Edit ${location.building}`}><Pencil size={15}/>Edit</button></div>)}</div>
+        <div className="mt-4 divide-y">{locations.map(location=><div className="flex items-center justify-between gap-4 py-3" key={location.id}><p className={`min-w-0 text-sm ${location.is_active?'':'opacity-50'}`}><b>{location.building}</b>{location.floor&&<> · {location.floor}</>}{location.room&&<> {location.room}</>}{!location.is_active&&<small className="ml-2 rounded-full bg-slate-100 px-2 py-1">Inactive</small>}</p><button className="btn-secondary btn-sm shrink-0" onClick={()=>openEditLocation(location)} aria-label={`Edit ${location.building}`}><Pencil size={15}/>Edit</button></div>)}</div>
       </section>
     </div>
   </div>

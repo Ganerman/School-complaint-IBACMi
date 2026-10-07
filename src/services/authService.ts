@@ -1,7 +1,14 @@
-import { supabase } from '../lib/supabase'
+import { isSupabaseConfigured, supabase } from '../lib/supabase'
 
 export const authService = {
   signIn: async (identifier: string, password: string) => {
+    if (!isSupabaseConfigured) {
+      return {
+        data: { user: null, session: null },
+        error: new Error('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY to your .env file.'),
+      }
+    }
+
     const value = identifier.trim()
     if (value.includes('@')) return supabase.auth.signInWithPassword({ email: value, password })
 
@@ -36,15 +43,23 @@ export const authService = {
         queryParams: { prompt: 'select_account' },
       },
     }),
-  signUp: async (data: { email: string; password: string; fullName: string; studentId: string; course: string; yearLevel: string; department: string; accountType: 'student'|'teacher'|'staff' }) =>
-    supabase.auth.signUp({
+  signUp: async (data: { email: string; password: string; fullName: string; studentId: string; contactNumber: string; course: string; yearLevel: string; department: string; accountType: 'student'|'teacher'|'staff' }) => {
+    if (!isSupabaseConfigured) {
+      return {
+        data: { user: null, session: null },
+        error: new Error('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY to your .env file.'),
+      }
+    }
+
+    return supabase.auth.signUp({
       email: data.email.trim().toLowerCase(),
       password: data.password,
       options: {
         emailRedirectTo: `${window.location.origin}/login`,
-        data: { full_name:data.fullName.trim(), student_id:data.studentId.trim(), course:data.accountType==='student'?data.course:'', year_level:data.accountType==='student'?data.yearLevel:'', department:data.accountType==='student'?'':data.department.trim(), account_type:data.accountType },
+        data: { full_name:data.fullName.trim(), student_id:data.studentId.trim(), contact_number:data.contactNumber.trim(), course:data.accountType==='student'?data.course:'', year_level:data.accountType==='student'?data.yearLevel:'', department:data.accountType==='student'?'':data.department.trim(), account_type:data.accountType },
       },
-    }),
+    })
+  },
   signOut: async () => supabase.auth.signOut(),
   resetPassword: async (email: string) =>
     supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` }),

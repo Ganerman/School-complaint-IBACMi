@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { AlertTriangle, BarChart3, CalendarClock, CheckCircle2, CircleGauge, Clock3, Download, FilterX, GraduationCap, MessageSquareText, TrendingUp, Wrench } from 'lucide-react'
+import { AlertTriangle, BarChart3, CheckCircle2, CircleGauge, Clock3, Download, FilterX, TrendingUp, Wrench } from 'lucide-react'
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { supabase } from '../../lib/supabase'
 import { useRealtime } from '../../hooks/useRealtime'
-import type { AcademicConcern, Complaint } from '../../types'
+import type { Complaint } from '../../types'
 import { humanize } from '../../utils/format'
 
 const statuses = ['submitted','under_review','verified','assigned','in_progress','waiting_for_materials','resolved','closed','rejected','reopened']
@@ -14,30 +14,23 @@ const complaintCategoryLabel = (item:Complaint) => item.category?.name==='Other'
 
 export function ReportsPage(){
   const [items,setItems]=useState<Complaint[]>([])
-  const [academicItems,setAcademicItems]=useState<AcademicConcern[]>([])
   const [loading,setLoading]=useState(true)
   const [error,setError]=useState('')
   const [filters,setFilters]=useState(emptyFilters)
 
   const load=useCallback(async()=>{
-    const [complaints,academic]=await Promise.all([
-      supabase.from('complaints').select('*,category:complaint_categories(*),location:locations(*)').order('submitted_at',{ascending:false}),
-      supabase.from('academic_concerns').select('*').order('created_at',{ascending:false}),
-    ])
-    setError(complaints.error||academic.error?'Analytics could not be loaded completely. Please try again.':'')
-    setItems((complaints.data||[]) as Complaint[])
-    setAcademicItems((academic.data||[]) as AcademicConcern[])
+    const { data, error: complaintsError } = await supabase.from('complaints').select('*,category:complaint_categories(*),location:locations(*)').order('submitted_at',{ascending:false})
+    setError(complaintsError ? 'Analytics could not be loaded. Please try again.' : '')
+    setItems((data || []) as Complaint[])
     setLoading(false)
   },[])
 
   useEffect(()=>{void load()},[load])
   useRealtime('complaints',load)
-  useRealtime('academic_concerns',load)
 
   const categories=useMemo(()=>[...new Set(items.map(item=>item.category?.name).filter(Boolean) as string[])].sort(),[items])
   const locations=useMemo(()=>[...new Set(items.map(item=>item.location?.building).filter(Boolean) as string[])].sort(),[items])
   const shown=useMemo(()=>items.filter(item=>(!filters.from||item.submitted_at.slice(0,10)>=filters.from)&&(!filters.to||item.submitted_at.slice(0,10)<=filters.to)&&(!filters.status||item.status===filters.status)&&(!filters.category||item.category?.name===filters.category)&&(!filters.location||item.location?.building===filters.location)),[items,filters])
-  const academicShown=useMemo(()=>academicItems.filter(item=>(!filters.from||item.created_at.slice(0,10)>=filters.from)&&(!filters.to||item.created_at.slice(0,10)<=filters.to)),[academicItems,filters.from,filters.to])
   const resolved=shown.filter(item=>item.resolved_at)
   const open=shown.filter(item=>!closedStatuses.includes(item.status))
   const overdue=open.filter(item=>new Date(item.sla_deadline)<new Date())
@@ -48,18 +41,11 @@ export function ReportsPage(){
   const urgentOpen=open.filter(item=>item.priority==='high'||item.priority==='emergency').length
   const unassigned=open.filter(item=>!item.assigned_staff_id).length
   const activeFilterCount=Object.values(filters).filter(Boolean).length
-  const academicClosed=academicShown.filter(item=>['resolved','dismissed','escalated'].includes(item.status))
-  const academicActive=academicShown.filter(item=>!['resolved','dismissed','escalated'].includes(item.status))
-  const academicAwaiting=academicShown.filter(item=>['under_review','teacher_notified'].includes(item.status)).length
-  const academicMeetings=academicShown.filter(item=>item.status==='meeting_scheduled').length
-  const academicResolutionRate=academicShown.length?Math.round(academicClosed.length/academicShown.length*100):0
 
   const categoryData=useMemo(()=>Object.entries(shown.reduce<Record<string,number>>((result,item)=>{const key=complaintCategoryLabel(item);result[key]=(result[key]||0)+1;return result},{})).map(([name,total])=>({name,total})).sort((a,b)=>b.total-a.total).slice(0,8),[shown])
   const statusData=useMemo(()=>Object.entries(shown.reduce<Record<string,number>>((result,item)=>{result[item.status]=(result[item.status]||0)+1;return result},{})).map(([name,value])=>({name:humanize(name),value})).sort((a,b)=>b.value-a.value),[shown])
   const priorityData=useMemo(()=>['emergency','high','medium','low'].map(name=>({name:humanize(name),total:shown.filter(item=>item.priority===name).length})),[shown])
   const buildingData=useMemo(()=>Object.entries(shown.reduce<Record<string,number>>((result,item)=>{const key=item.location?.building||'Unspecified';result[key]=(result[key]||0)+1;return result},{})).map(([name,total])=>({name,total})).sort((a,b)=>b.total-a.total),[shown])
-  const academicTypeData=useMemo(()=>Object.entries(academicShown.reduce<Record<string,number>>((result,item)=>{result[item.concern_type]=(result[item.concern_type]||0)+1;return result},{})).map(([name,total])=>({name:humanize(name),total})).sort((a,b)=>b.total-a.total),[academicShown])
-  const academicStatusData=useMemo(()=>Object.entries(academicShown.reduce<Record<string,number>>((result,item)=>{result[item.status]=(result[item.status]||0)+1;return result},{})).map(([name,value])=>({name:humanize(name),value})).sort((a,b)=>b.value-a.value),[academicShown])
   const trendData=useMemo(()=>{
     if(!shown.length)return[]
     const timestamps=shown.map(item=>new Date(item.submitted_at).getTime())
@@ -95,7 +81,7 @@ export function ReportsPage(){
     </div>
 
     <section className="card mt-7 p-4" aria-label="Analytics filters">
-      <div className="mb-3 flex items-center justify-between gap-3"><div><h2 className="text-sm font-bold">Filter analytics</h2><p className="text-xs text-slate-400">Every metric and chart updates together.</p></div>{activeFilterCount>0&&<button className="inline-flex items-center gap-1.5 text-xs font-semibold text-forest-700" onClick={()=>setFilters(emptyFilters)}><FilterX size={15}/>Clear {activeFilterCount} filter{activeFilterCount>1?'s':''}</button>}</div>
+      <div className="mb-3 flex items-center justify-between gap-3"><div><h2 className="text-sm font-bold">Filter analytics</h2><p className="text-xs text-slate-400">Every metric and chart updates together.</p></div>{activeFilterCount>0&&<button className="btn-ghost btn-sm" onClick={()=>setFilters(emptyFilters)}><FilterX size={15}/>Clear {activeFilterCount} filter{activeFilterCount>1?'s':''}</button>}</div>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <Filter label="From"><input className="input" type="date" value={filters.from} max={filters.to||undefined} onChange={event=>setFilters({...filters,from:event.target.value})}/></Filter>
         <Filter label="To"><input className="input" type="date" value={filters.to} min={filters.from||undefined} onChange={event=>setFilters({...filters,to:event.target.value})}/></Filter>
@@ -125,19 +111,6 @@ export function ReportsPage(){
 
     <section className="card mt-5 overflow-hidden"><div className="border-b bg-slate-50/70 px-5 py-4"><h2 className="font-bold">Operational focus</h2><p className="mt-1 text-sm text-slate-500">Immediate signals from the filtered complaint set.</p></div><div className="grid divide-y md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4"><Insight icon={<AlertTriangle/>} label="Overdue cases" value={overdue.length} note="Past their SLA deadline" danger={overdue.length>0}/><Insight icon={<TrendingUp/>} label="Urgent open" value={urgentOpen} note="High or emergency priority" danger={urgentOpen>0}/><Insight icon={<Wrench/>} label="Needs assignment" value={unassigned} note="Open without maintenance staff" danger={unassigned>0}/><Insight icon={<BarChart3/>} label="Busiest building" value={buildingData[0]?.name||'—'} note={buildingData[0]?`${buildingData[0].total} complaint${buildingData[0].total===1?'':'s'}`:'No location data'}/></div></section>
 
-    <section className="mt-10 border-t-2 border-forest-100 pt-8">
-      <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.2em] text-forest-600">Confidential case overview</p><h2 className="display mt-1 text-3xl">Academic concern analytics</h2><p className="mt-2 text-sm text-slate-500">Aggregated workflow insights without exposing confidential case statements.</p></div><p className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-500">Date filters apply to this section</p></div>
-      <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric label="Total concerns" value={loading?'…':academicShown.length} detail={`${academicActive.length} active cases`} icon={<GraduationCap/>}/>
-        <Metric label="Completion rate" value={`${academicResolutionRate}%`} detail={`${academicClosed.length} completed or closed`} icon={<CheckCircle2/>} tone="green"/>
-        <Metric label="Awaiting response" value={academicAwaiting} detail="Student or teacher action stage" icon={<MessageSquareText/>} tone={academicAwaiting?'amber':'green'}/>
-        <Metric label="Meetings scheduled" value={academicMeetings} detail="Cases currently in meeting stage" icon={<CalendarClock/>} tone="maroon"/>
-      </div>
-      <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,.8fr)]">
-        <ChartCard title="Concern types" subtitle="Most common academic support needs">{academicTypeData.length?<HorizontalBar data={academicTypeData} label="Academic concerns by type"/>:<NoData message="No academic concerns match the selected dates."/>}</ChartCard>
-        <ChartCard title="Academic workflow status" subtitle="Current stage of every concern">{academicStatusData.length?<div className="h-72" role="img" aria-label="Academic concern status distribution"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={academicStatusData} dataKey="value" nameKey="name" innerRadius={58} outerRadius={88} paddingAngle={2}>{academicStatusData.map((_,index)=><Cell key={index} fill={chartColors[index%chartColors.length]}/>)}</Pie><Tooltip/><Legend iconType="circle" wrapperStyle={{fontSize:12}}/></PieChart></ResponsiveContainer></div>:<NoData message="No academic concerns match the selected dates."/>}</ChartCard>
-      </div>
-    </section>
   </div>
 }
 

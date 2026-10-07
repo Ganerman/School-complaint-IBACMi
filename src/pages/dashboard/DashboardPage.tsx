@@ -9,8 +9,14 @@ import type { Complaint } from '../../types'
 import { formatDate, slaText } from '../../utils/format'
 import { useAuth } from '../../hooks/useAuth'
 import { useRealtime } from '../../hooks/useRealtime'
+import { AdminDashboardPage } from './AdminDashboardPage'
 
 export function DashboardPage(){
+ const {profile}=useAuth()
+ return profile?.role==='admin'?<AdminDashboardPage/>:<GeneralDashboardPage/>
+}
+
+function GeneralDashboardPage(){
  const{profile}=useAuth();const nav=useNavigate();const[items,setItems]=useState<Complaint[]>([]);const[loading,setLoading]=useState(true);const[error,setError]=useState('')
  const load=useCallback(async()=>{const{data,error:loadError}=await complaintService.list();setError(loadError?'Unable to load the dashboard data. Please refresh and try again.':'');setItems((data||[]) as unknown as Complaint[]);setLoading(false)},[])
  useEffect(()=>{void load()},[load]);useRealtime('complaints',load)

@@ -29,8 +29,7 @@ export function NotificationsPage() {
   async function read(notification: AppNotification) {
     if (!notification.is_read) await notificationService.markRead(notification.id)
     if (notification.reference_id && profile) {
-      const section = notification.notification_type?.startsWith('academic_') ? 'academic-concerns' : 'complaints'
-      navigate(`/${profile.role}/${section}/${notification.reference_id}`)
+      navigate(`/${profile.role}/complaints/${notification.reference_id}`)
     } else void load()
   }
 

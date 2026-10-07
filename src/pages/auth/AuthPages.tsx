@@ -16,7 +16,7 @@ function AuthShell({ title, subtitle, children }: { title: string; subtitle: str
 }
 function PasswordInput({ value, onChange, label='Password' }: { value:string; onChange:(v:string)=>void; label?:string }) {
   const [show,setShow]=useState(false)
-  return <div><label className="label">{label}</label><div className="relative"><input className="input pr-11" type={show?'text':'password'} minLength={8} required value={value} onChange={e=>onChange(e.target.value)} /><button type="button" className="absolute right-3 top-2.5 text-slate-400" onClick={()=>setShow(!show)} aria-label="Show password">{show?<EyeOff size={19}/>:<Eye size={19}/>}</button></div></div>
+  return <div><label className="label">{label}</label><div className="relative"><input className="input pr-11" type={show?'text':'password'} minLength={8} required value={value} onChange={e=>onChange(e.target.value)} /><button type="button" className="btn-icon btn-icon-sm absolute right-1 top-1" onClick={()=>setShow(!show)} aria-label={show?"Hide password":"Show password"} aria-pressed={show}>{show?<EyeOff size={19}/>:<Eye size={19}/>}</button></div></div>
 }
 
 function GoogleIcon({ className = 'h-5 w-5' }: { className?: string }) {
@@ -48,10 +48,10 @@ export function LoginPage() {
             <Link className="font-medium text-forest-700 hover:underline" to="/forgot-password">Forgot Password?</Link>
             <Link className="font-medium text-forest-700 hover:underline" to="/register">Create a student account</Link>
           </div>
-          <button className="w-full rounded-full bg-forest-700 px-5 py-3 font-bold text-white shadow-lg shadow-forest-100 transition hover:bg-forest-800" disabled={busy||!isSupabaseConfigured}>{busy?'Signing in…':'Sign In'}</button>
+          <button className="btn-primary btn-lg w-full" disabled={busy||!isSupabaseConfigured}>{busy?'Signing in…':'Sign In'}</button>
           <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-slate-400"><span className="h-px flex-1 bg-slate-200"/><span>or</span><span className="h-px flex-1 bg-slate-200"/></div>
-          <button type="button" onClick={googleSignIn} className="group relative flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-12 py-3 font-semibold text-slate-700 shadow-sm transition duration-200 hover:border-slate-400 hover:bg-slate-50 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100 active:scale-[.99] disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none" disabled={googleBusy||!isSupabaseConfigured}>
-            <span className="absolute left-4 grid h-8 w-8 place-items-center rounded-full bg-white shadow-sm ring-1 ring-slate-100 transition group-hover:scale-105"><GoogleIcon className="h-5 w-5"/></span>
+          <button type="button" onClick={googleSignIn} className="btn-secondary btn-lg relative w-full px-12" disabled={googleBusy||!isSupabaseConfigured}>
+            <span className="absolute left-4 grid h-6 w-6 place-items-center"><GoogleIcon className="h-5 w-5"/></span>
             {googleBusy?<span className="inline-flex items-center gap-2"><LoaderCircle className="h-4 w-4 animate-spin"/>Connecting…</span>:'Continue with Google'}
           </button>
           <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm leading-5 text-red-800"><b>Gentle Reminder:</b> Do not share passwords, complaint evidence, or other confidential information on social media. Protect your privacy.</div>
@@ -62,9 +62,13 @@ export function LoginPage() {
   </main>
 }
 export function RegisterPage() {
-  const [form,setForm]=useState({fullName:'',studentId:'',email:'',course:'',yearLevel:'',department:'',password:'',accountType:'student' as 'student'|'teacher'|'staff'});const[busy,setBusy]=useState(false)
+  const nav = useNavigate()
+  const emptyForm = {fullName:'',studentId:'',email:'',contactNumber:'',course:'',yearLevel:'',department:'',password:'',accountType:'student' as 'student'|'teacher'|'staff'}
+  const [form,setForm]=useState(emptyForm);const[busy,setBusy]=useState(false)
+  const [confirmPassword,setConfirmPassword]=useState('')
+  const [privacyAcknowledged,setPrivacyAcknowledged]=useState(false)
   const set=(k:string,v:string)=>setForm({...form,[k]:v})
-  async function submit(e:FormEvent){e.preventDefault();setBusy(true);const {error}=await authService.signUp(form);setBusy(false);if(error)return toast.error(friendlyError(error));toast.success(form.accountType==='student'?'Account created. Check your email to verify it.':'Account created. Verify your email, then wait for administrator approval.',{duration:8000})}
+  async function submit(e:FormEvent){e.preventDefault();if(form.password!==confirmPassword)return toast.error('Passwords do not match.');if(!privacyAcknowledged)return toast.error('Please read and acknowledge the Privacy Notice before creating an account.');setBusy(true);const {error}=await authService.signUp(form);setBusy(false);if(error)return toast.error(friendlyError(error));setForm(emptyForm);setConfirmPassword('');setPrivacyAcknowledged(false);toast.success(form.accountType==='student'?'Account created. Check your email to verify it.':'Account created. Verify your email, then wait for administrator approval.',{duration:8000});nav('/login')}
   return <main className="min-h-screen bg-[#eef2f7] px-5 py-12">
     <div className="mx-auto w-full max-w-[620px]">
       <Link to="/" className="mb-7 flex items-center justify-center gap-3">
@@ -81,14 +85,30 @@ export function RegisterPage() {
             <div><label className="label font-normal">Full name</label><input className="input h-11 rounded-md" required value={form.fullName} onChange={e=>set('fullName',e.target.value)}/></div>
             <div><label className="label font-normal">{form.accountType==='student'?'School ID No.':'Employee ID No.'}</label><input className="input h-11 rounded-md" required value={form.studentId} onChange={e=>set('studentId',e.target.value)}/></div>
           </div>
-          <div><label className="label font-normal">School email</label><input className="input h-11 rounded-md" type="email" required value={form.email} onChange={e=>set('email',e.target.value)} placeholder="student@school.edu"/></div>
+          <div><label className="label font-normal">Gmail Account</label><input className="input h-11 rounded-md" type="email" required value={form.email} onChange={e=>set('email',e.target.value)} placeholder="yourname@gmail.com"/></div>
+          <div><label className="label font-normal">Contact number</label><input className="input h-11 rounded-md" type="tel" inputMode="numeric" pattern="[0-9]{11}" maxLength={11} required value={form.contactNumber} onChange={e=>set('contactNumber',e.target.value.replace(/\D/g,'').slice(0,11))} placeholder="09xxxxxxxxx" /></div>
           {form.accountType==='student'&&<div className="grid gap-5 sm:grid-cols-2">
             <div><label className="label font-normal">Course</label><select className="input h-11 rounded-md" required value={form.course} onChange={e=>set('course',e.target.value)}><option value="">Select course</option>{['BSIT','BPA','CRIM','BEED','BECED','HM','ENTREP','BASIC EDUCATION DEPARTMENT'].map(course=><option key={course} value={course}>{course}</option>)}</select></div>
             <div><label className="label font-normal">Year level</label><select className="input h-11 rounded-md" required value={form.yearLevel} onChange={e=>set('yearLevel',e.target.value)}><option value="">Select year</option>{['1st Year','2nd Year','3rd Year','4th Year','5th Year'].map(x=><option key={x}>{x}</option>)}</select></div>
           </div>}
           {form.accountType!=='student'&&<div><label className="label font-normal">Department / office</label><input className="input h-11 rounded-md" required maxLength={150} value={form.department} onChange={e=>set('department',e.target.value)} placeholder={form.accountType==='teacher'?'e.g. College of Information Technology':'e.g. Registrar Office'}/><p className="mt-1.5 text-xs text-amber-700">This account will remain pending until an administrator verifies your identity.</p></div>}
           <PasswordInput value={form.password} onChange={v=>set('password',v)}/>
-          <button className="w-full rounded-full bg-forest-700 px-5 py-3 font-bold text-white shadow-lg shadow-forest-100 transition hover:bg-forest-800" disabled={busy||!isSupabaseConfigured}>{busy?'Creating account…':`Create ${form.accountType==='student'?'Student':'Teacher / Staff'} Account`}</button>
+          <PasswordInput value={confirmPassword} onChange={setConfirmPassword} label="Confirm password"/>
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+            <details className="text-sm text-slate-600">
+              <summary className="cursor-pointer rounded font-semibold text-forest-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-700 focus-visible:ring-offset-2">Privacy Notice</summary>
+              <div id="registration-privacy-notice" className="mt-3 space-y-3 leading-6">
+                <p>This registration collects your name, school or employee ID, email, contact number, account type, and course and year level or department. Your password is used to secure your account through Supabase Authentication.</p>
+                <p>Your account information is used to identify you, verify your registration, provide access appropriate to your role, and support school complaint handling. The system uses Supabase for authentication and data storage. School administrators can manage accounts and verify teacher and staff identities.</p>
+                <p>For questions about your information, including access, corrections, retention, or deletion requests, contact the school administration of IBA College of Mindanao, Inc.</p>
+              </div>
+            </details>
+            <label htmlFor="privacy-acknowledgment" className="mt-4 flex cursor-pointer items-start gap-3 text-sm leading-6 text-slate-700">
+              <input id="privacy-acknowledgment" name="privacyAcknowledgment" type="checkbox" required checked={privacyAcknowledged} onChange={e=>setPrivacyAcknowledged(e.target.checked)} className="mt-1 h-4 w-4 shrink-0 accent-forest-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-700 focus-visible:ring-offset-2"/>
+              <span>I have read the Privacy Notice. <span className="text-slate-500">(Required)</span></span>
+            </label>
+          </div>
+          <button className="btn-primary btn-lg w-full" disabled={busy||!isSupabaseConfigured}>{busy?'Creating account…':`Create ${form.accountType==='student'?'Student':'Teacher / Staff'} Account`}</button>
           <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm leading-5 text-red-800"><b>Gentle Reminder:</b> Use your real school information and never share your password or confidential complaint evidence with others.</div>
           <p className="text-center text-sm text-slate-500">Already registered? <Link className="font-bold text-forest-700 hover:underline" to="/login">Sign In</Link></p>
         </form>

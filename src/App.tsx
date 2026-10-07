@@ -8,6 +8,7 @@ import { ProtectedRoute } from './routes/ProtectedRoute'
 import { LoadingScreen } from './components/common/States'
 
 const LandingPage=lazy(()=>import('./pages/public/LandingPage').then(m=>({default:m.LandingPage})))
+const GuidePage=lazy(()=>import('./pages/public/GuidePage').then(m=>({default:m.GuidePage})))
 const InfoPages=()=>import('./pages/public/InfoPages')
 const AboutPage=lazy(()=>InfoPages().then(m=>({default:m.AboutPage})))
 const VisionMissionPage=lazy(()=>InfoPages().then(m=>({default:m.VisionMissionPage})))
@@ -29,10 +30,6 @@ const ReportsPage=lazy(()=>AdminPages().then(m=>({default:m.ReportsPage})))
 const SettingsPage=lazy(()=>AdminPages().then(m=>({default:m.SettingsPage})))
 const UsersPage=lazy(()=>import('./pages/admin/UsersPage').then(m=>({default:m.UsersPage})))
 const CampusMomentsPage=lazy(()=>import('./pages/admin/CampusMomentsPage').then(m=>({default:m.CampusMomentsPage})))
-const AcademicPages=()=>import('./pages/academic/AcademicConcernPages')
-const AcademicConcernListPage=lazy(()=>AcademicPages().then(m=>({default:m.AcademicConcernListPage})))
-const NewAcademicConcernPage=lazy(()=>AcademicPages().then(m=>({default:m.NewAcademicConcernPage})))
-const AcademicConcernDetailPage=lazy(()=>AcademicPages().then(m=>({default:m.AcademicConcernDetailPage})))
 
 const shared = <>
   <Route path="dashboard" element={<DashboardPage/>}/>
@@ -42,10 +39,10 @@ const shared = <>
   <Route path="profile" element={<ProfilePage/>}/>
 </>
 export default function App(){return <BrowserRouter><AuthProvider><Suspense fallback={<LoadingScreen/>}><Routes>
-  <Route element={<PublicLayout/>}><Route index element={<LandingPage/>}/><Route path="about" element={<AboutPage/>}/><Route path="vision-mission" element={<VisionMissionPage/>}/></Route>
+  <Route element={<PublicLayout/>}><Route index element={<LandingPage/>}/><Route path="guide" element={<GuidePage/>}/><Route path="about" element={<AboutPage/>}/><Route path="vision-mission" element={<VisionMissionPage/>}/></Route>
   <Route path="login" element={<LoginPage/>}/><Route path="register" element={<RegisterPage/>}/><Route path="forgot-password" element={<ForgotPasswordPage/>}/><Route path="reset-password" element={<ResetPasswordPage/>}/><Route path="portal" element={<PortalRedirect/>}/>
-  <Route element={<ProtectedRoute roles={['student']} requireCompleteProfile/> }><Route path="student" element={<DashboardLayout/>}>{shared}<Route path="complete-profile" element={<CompleteStudentProfilePage/>}/><Route path="complaints/new" element={<NewComplaintPage/>}/><Route path="academic-concerns" element={<AcademicConcernListPage/>}/><Route path="academic-concerns/new" element={<NewAcademicConcernPage/>}/><Route path="academic-concerns/:id" element={<AcademicConcernDetailPage/>}/><Route index element={<Navigate to="dashboard" replace/>}/></Route></Route>
+  <Route element={<ProtectedRoute roles={['student']} requireCompleteProfile/> }><Route path="student" element={<DashboardLayout/>}>{shared}<Route path="complete-profile" element={<CompleteStudentProfilePage/>}/><Route path="complaints/new" element={<NewComplaintPage/>}/><Route index element={<Navigate to="dashboard" replace/>}/></Route></Route>
   <Route element={<ProtectedRoute roles={['maintenance']}/> }><Route path="maintenance" element={<DashboardLayout/>}>{shared}<Route index element={<Navigate to="dashboard" replace/>}/></Route></Route>
-  <Route element={<ProtectedRoute roles={['admin']}/> }><Route path="admin" element={<DashboardLayout/>}>{shared}<Route path="users" element={<UsersPage/>}/><Route path="campus-moments" element={<CampusMomentsPage/>}/><Route path="reports" element={<ReportsPage/>}/><Route path="settings" element={<SettingsPage/>}/><Route path="academic-concerns" element={<AcademicConcernListPage/>}/><Route path="academic-concerns/:id" element={<AcademicConcernDetailPage/>}/><Route index element={<Navigate to="dashboard" replace/>}/></Route></Route>
+  <Route element={<ProtectedRoute roles={['admin']}/> }><Route path="admin" element={<DashboardLayout/>}>{shared}<Route path="users" element={<UsersPage/>}/><Route path="campus-moments" element={<CampusMomentsPage/>}/><Route path="reports" element={<ReportsPage/>}/><Route path="settings" element={<SettingsPage/>}/><Route index element={<Navigate to="dashboard" replace/>}/></Route></Route>
   <Route path="*" element={<Navigate to="/" replace/>}/>
  </Routes></Suspense><Toaster richColors position="top-right"/></AuthProvider></BrowserRouter>}

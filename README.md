@@ -7,7 +7,7 @@ A responsive React and Supabase web application for reporting, assigning, tracki
 - Student registration, email verification, login, recovery, persistent sessions, and password changes
 - Student, maintenance, and administrator portals with server-authorized role routing
 - Database-generated complaint numbers (`CMP-YYYY-00001`) and priority-based SLA deadlines
-- Private before/progress/after evidence with signed URLs and 5 MB image validation
+- Private before/progress/after evidence with signed URLs, batches of up to five photos, and automatic image compression (20 MB source limit; 5 MB stored limit)
 - Validated complaint workflow, automatic history, notifications, assignments, and audit records
 - Realtime dashboard, complaint, assignment, timeline, and notification updates
 - Admin users, categories, locations, SLA summary, and CSV exports
@@ -145,6 +145,10 @@ supabase/
 ```
 
 ## Production notes
+
+- Photo uploads show completion per file and can retry remaining photos without creating another complaint. The same prepared file, name, reporter, complaint, and photo type reuse an upload reference, including after refresh and reselection.
+- Original photo selections stay in memory. Keep the upload page open until it finishes; after leaving, select missing photos again from the existing complaint. Open complaints accept additional reporter evidence; assigned maintenance staff can upload progress and after-repair evidence.
+- Multiple photos and retry use the existing photo table and storage policies; this enhancement does not require a new SQL migration.
 
 - User content is rendered as text; the app never uses `dangerouslySetInnerHTML`.
 - `complaint-photos` signed URLs expire after one hour.

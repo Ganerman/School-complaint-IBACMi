@@ -1,21 +1,31 @@
 import { useEffect, useState } from 'react'
 import { Search, X } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { complaintService } from '../../services/complaintService'
 import type { Complaint } from '../../types'
 import { EmptyState, LoadingScreen } from '../../components/common/States'
 import { PriorityBadge, StatusBadge } from '../../components/common/Badge'
 import { useAuth } from '../../hooks/useAuth'
 import { formatDate } from '../../utils/format'
+import { complaintViews, isComplaintView, matchesComplaintView } from '../../utils/complaintFilters'
 
 export function ComplaintListPage(){
   const{profile}=useAuth()
   const nav=useNavigate()
   const[items,setItems]=useState<Complaint[]>([])
-  const[q,setQ]=useState('')
-  const[status,setStatus]=useState('')
+  const[searchParams,setSearchParams]=useSearchParams()
+  const q=searchParams.get('q')||''
+  const status=searchParams.get('status')||''
+  const requestedView=searchParams.get('view')
+  const view=isComplaintView(requestedView)?requestedView:''
+  const staff=searchParams.get('staff')||''
+  const location=searchParams.get('location')||''
+  const[now,setNow]=useState(Date.now())
   const[loading,setLoading]=useState(true)
   const[loadError,setLoadError]=useState('')
+  function setFilter(key:string,value:string){setSearchParams(previous=>{const next=new URLSearchParams(previous);if(value)next.set(key,value);else next.delete(key);return next},{replace:true})}
+
+  useEffect(()=>{const timer=window.setInterval(()=>setNow(Date.now()),60_000);return()=>window.clearInterval(timer)},[])
 
   useEffect(()=>{
     complaintService.list().then(({data,error})=>{
@@ -28,14 +38,17 @@ export function ComplaintListPage(){
   const shown=items.filter(item=>{
     const reporter=item.reporter
     const searchable=`${item.title} ${item.complaint_number} ${item.other_category||''} ${reporter?.full_name||''} ${reporter?.student_id||''}`.toLowerCase()
-    return(!status||item.status===status)&&searchable.includes(q.toLowerCase())
+    return(!status||item.status===status)&&matchesComplaintView(item,view,now)&&(!staff||item.assigned_staff_id===staff)&&(!location||item.location_id===location)&&searchable.includes(q.toLowerCase())
   })
+  const selectedStaff=items.find(item=>item.assigned_staff_id===staff)?.assigned_staff
+  const selectedLocation=items.find(item=>item.location_id===location)?.location
   if(loading)return <LoadingScreen/>
 
   return <div>
     <div className="flex flex-wrap items-end justify-between gap-4"><div><h1 className="display text-4xl">Complaints</h1><p className="mt-2 text-slate-500">Search, review, and track facility reports.</p></div>{profile?.role==='student'&&<Link className="btn-primary" to="/student/complaints/new">New complaint</Link>}</div>
     {loadError&&<div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">{loadError} Check the account role and complaint RLS policies.</div>}
-    <div className="my-6 flex flex-wrap items-center gap-3"><label className="relative min-w-[260px] flex-1"><span className="sr-only">Search complaints</span><Search className="absolute left-3 top-3 text-slate-400" size={18}/><input className="input pl-10" placeholder="Search report, name, or School ID" value={q} onChange={e=>setQ(e.target.value)}/></label><label><span className="sr-only">Filter by status</span><select className="input w-auto min-w-44" value={status} onChange={e=>setStatus(e.target.value)}><option value="">All statuses</option>{['submitted','under_review','verified','assigned','in_progress','waiting_for_materials','resolved','closed','rejected','reopened'].map(value=><option key={value} value={value}>{value.replaceAll('_',' ')}</option>)}</select></label>{(q||status)&&<button className="btn-secondary" type="button" onClick={()=>{setQ('');setStatus('')}}><X size={17}/>Clear</button>}<span className="text-sm text-slate-500" aria-live="polite">{shown.length} {shown.length===1?'result':'results'}</span></div>
+    <div className="my-6 flex flex-wrap items-center gap-3"><label className="relative min-w-[240px] flex-1"><span className="sr-only">Search complaints</span><Search className="absolute left-3 top-3 text-slate-400" size={18}/><input className="input pl-10" placeholder="Search report, name, or School ID" value={q} onChange={e=>setFilter('q',e.target.value)}/></label><label><span className="sr-only">Filter by workload</span><select className="input w-auto min-w-44" value={view} onChange={e=>setFilter('view',e.target.value)}><option value="">All workloads</option>{Object.entries(complaintViews).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label><label><span className="sr-only">Filter by status</span><select className="input w-auto min-w-44" value={status} onChange={e=>setFilter('status',e.target.value)}><option value="">All statuses</option>{['submitted','under_review','verified','assigned','in_progress','waiting_for_materials','resolved','closed','rejected','reopened'].map(value=><option key={value} value={value}>{value.replaceAll('_',' ')}</option>)}</select></label>{(q||status||view||staff||location)&&<button className="btn-secondary" type="button" onClick={()=>setSearchParams({},{replace:true})}><X size={17}/>Clear</button>}<span className="text-sm text-slate-500" aria-live="polite">{shown.length} {shown.length===1?'result':'results'}</span></div>
+    {(staff||location)&&<div className="mb-5 flex flex-wrap gap-2">{staff&&<button type="button" onClick={()=>setFilter('staff','')} className="inline-flex items-center gap-2 rounded-full border border-forest-100 bg-forest-50 px-3 py-1.5 text-xs font-semibold text-forest-700" aria-label="Remove technician filter">{selectedStaff?.full_name||'Selected technician'}<X size={14}/></button>}{location&&<button type="button" onClick={()=>setFilter('location','')} className="inline-flex items-center gap-2 rounded-full border border-forest-100 bg-forest-50 px-3 py-1.5 text-xs font-semibold text-forest-700" aria-label="Remove location filter">{selectedLocation?[selectedLocation.building,selectedLocation.floor,selectedLocation.room].filter(Boolean).join(' · '):'Selected location'}<X size={14}/></button>}</div>}
     {shown.length===0?<EmptyState title="No matching complaints" message="No saved complaint matches the current search or filter."/>:<div className="card overflow-x-auto"><table className="w-full min-w-[980px] text-left text-sm"><thead className="border-b bg-slate-50 text-xs uppercase text-slate-400"><tr><th className="px-5 py-4">Report</th><th>Reported by</th><th>Location</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead><tbody>{shown.map(item=>{
       const reporter=item.reporter
       const isTeacher=reporter?.account_type==='teacher'

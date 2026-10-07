@@ -1,10 +1,9 @@
-import { ArrowRight, BarChart3, CheckCircle2, ClipboardCheck, ShieldCheck, Wrench } from 'lucide-react'
+import { ArrowRight, BarChart3, BookOpen, CheckCircle2, ClipboardCheck, ShieldCheck, Wrench } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { CampusMomentsGlobe } from '../../components/public/ResolvedComplaintGlobe'
 import ceilingLeak from '../../assets/complaints/ceiling-leak.png'
 import maintenanceResponse from '../../assets/complaints/maintenance-response.png'
 import studentReport from '../../assets/complaints/student-report.png'
-import studentTeacherConcern from '../../assets/complaints/student-teacher-concern.png'
 
 export function LandingPage() {
   return <main>
@@ -14,8 +13,9 @@ export function LandingPage() {
         <div><span className="inline-flex items-center gap-2 rounded-full border border-forest-100 bg-forest-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-forest-700"><ShieldCheck size={14} /> A safer, better campus</span>
           <h1 className="display mt-7 max-w-3xl text-5xl leading-[1.05] text-forest-900 sm:text-6xl lg:text-7xl">Every concern heard. Every facility cared for.</h1>
           <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">Report facility issues, follow repair progress, and help build a campus where everyone can learn at their best.</p>
-          <div className="mt-9 flex flex-wrap gap-3"><Link className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 font-bold text-forest-900 hover:bg-amber-300" to="/register">Report a concern <ArrowRight size={18}/></Link><Link className="rounded-xl border border-forest-200 bg-white px-5 py-3 font-semibold text-forest-800 hover:bg-forest-50" to="/login">Track my report</Link></div>
-          <div className="mt-10 flex flex-wrap gap-6 text-sm text-slate-500">{['Secure reporting','Live updates','Transparent resolution'].map(x=><span className="flex items-center gap-2" key={x}><CheckCircle2 className="text-forest-600" size={17}/>{x}</span>)}</div>
+          <div className="mt-9 flex flex-wrap gap-3"><Link className="btn-accent btn-lg" to="/register">Report a concern <ArrowRight size={18}/></Link><Link className="btn-secondary btn-lg" to="/login">Track my report</Link></div>
+          <Link to="/guide" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl px-1 py-2 text-sm font-semibold text-forest-700 underline-offset-4 hover:underline"><BookOpen size={18} aria-hidden="true"/>How to use the system<ArrowRight size={15} aria-hidden="true"/></Link>
+          <div className="mt-7 flex flex-wrap gap-6 text-sm text-slate-500">{['Secure reporting','Live updates','Transparent resolution'].map(x=><span className="flex items-center gap-2" key={x}><CheckCircle2 className="text-forest-600" size={17}/>{x}</span>)}</div>
         </div>
         <CampusMomentsGlobe />
       </div>
@@ -35,7 +35,6 @@ export function LandingPage() {
             [studentReport,'Report with confidence','Students can document damaged facilities in seconds.','01'],
             [ceilingLeak,'Make concerns visible','Clear photo evidence helps the school assess urgency.','02'],
             [maintenanceResponse,'Follow the response','Assigned teams provide accountable repair updates.','03'],
-            [studentTeacherConcern,'Share academic concerns','Students can privately raise classroom concerns with a teacher.','04'],
           ].map(([image,title,copy,number])=>
             <article className="group overflow-hidden rounded-2xl border bg-[#f6f6f6] shadow-sm" key={title}>
               <div className="relative h-64 overflow-hidden">

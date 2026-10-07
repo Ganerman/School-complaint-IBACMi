@@ -1,0 +1,3 @@
+Tool: Built-in image_gen (edit)
+
+Edit the most recent flowchart image. Change ONLY the text inside the first rectangular process box immediately below START: replace "Identify a school facility problem" with exactly "User has a concern". Center this new text neatly inside the existing rectangle. Preserve every other element exactly: the title, START oval, all other boxes and wording, arrows, Yes/No decision, No loop back to repair, END oval, caption, footer, white background, black outlines, typography, and portrait layout. The beginning must read START → User has a concern → Report the concern verbally or in writing. Do not add this explanatory sequence as extra text.
