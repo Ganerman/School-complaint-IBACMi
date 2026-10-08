@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Bell, CheckCheck } from 'lucide-react'
+import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import { notificationService } from '../../services/notificationService'
 import type { AppNotification } from '../../types'
@@ -27,10 +28,17 @@ export function NotificationsPage() {
   useRealtime('notifications', load)
 
   async function read(notification: AppNotification) {
-    if (!notification.is_read) await notificationService.markRead(notification.id)
+    if (!notification.is_read) {
+      const { error: markError } = await notificationService.markRead(notification.id)
+      if (markError) {
+        toast.error('Could not mark notification as read. Please try again.')
+        return
+      }
+      setItems(current => current.filter(item => item.id !== notification.id))
+    }
     if (notification.reference_id && profile) {
       navigate(`/${profile.role}/complaints/${notification.reference_id}`)
-    } else void load()
+    }
   }
 
   if (loading) return <LoadingScreen />
@@ -39,7 +47,7 @@ export function NotificationsPage() {
   return <div>
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div><h1 className="display text-4xl">Notifications</h1><p className="mt-2 text-slate-500">Updates about your complaints and assignments.</p></div>
-      <button className="btn-secondary" disabled={!hasUnread} onClick={async()=>{await notificationService.markAllRead();void load()}}><CheckCheck size={18}/>Mark all read</button>
+      <button className="btn-secondary" disabled={!hasUnread} onClick={async()=>{const{error:markError}=await notificationService.markAllRead();if(markError){toast.error('Could not mark notifications as read. Please try again.');return}setItems(current=>current.filter(item=>item.is_read))}}><CheckCheck size={18}/>Mark all read</button>
     </div>
     <PushNotificationCard/>
     {error && <div className="mt-6"><ErrorState message={error}/></div>}

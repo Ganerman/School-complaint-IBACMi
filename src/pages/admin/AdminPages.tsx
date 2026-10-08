@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BarChart3, CheckCircle2, Clock3, Download, Pencil, Plus, X } from 'lucide-react'
+import { BarChart3, CheckCircle2, Clock3, Download, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { toast } from 'sonner'
 import { supabase } from '../../lib/supabase'
@@ -48,6 +48,7 @@ export function SettingsPage(){
   const[editingLocationId,setEditingLocationId]=useState<string|null>(null)
   const[showLocationForm,setShowLocationForm]=useState(false)
   const[savingLocation,setSavingLocation]=useState(false)
+  const[deletingLocationId,setDeletingLocationId]=useState<string|null>(null)
 
   async function load(){
     const[c,l]=await Promise.all([
@@ -150,6 +151,22 @@ export function SettingsPage(){
     await load()
   }
 
+  async function deleteLocation(location:Location){
+    const label=[location.building,location.floor,location.room].filter(Boolean).join(' · ')
+    const confirmed=window.confirm(`Delete "${label}"? Locations linked to existing complaints cannot be deleted; mark those inactive instead.`)
+    if(!confirmed)return
+    setDeletingLocationId(location.id)
+    const {error}=await supabase.from('locations').delete().eq('id',location.id)
+    setDeletingLocationId(null)
+    if(error){
+      toast.error('Could not delete location. It may be linked to existing complaints; mark it inactive instead.')
+      return
+    }
+    toast.success('Location deleted.')
+    if(editingLocationId===location.id)closeLocationForm()
+    await load()
+  }
+
   return <div>
     <h1 className="display text-4xl">System setup</h1>
     <p className="mt-2 text-slate-500">Manage complaint categories and campus locations.</p>
@@ -181,7 +198,7 @@ export function SettingsPage(){
           <div className="flex justify-end gap-2"><button type="button" className="btn-secondary" onClick={closeLocationForm}>Cancel</button><button className="btn-primary" disabled={savingLocation}>{savingLocation?'Saving…':editingLocationId?'Save changes':'Add location'}</button></div>
         </form>}
 
-        <div className="mt-4 divide-y">{locations.map(location=><div className="flex items-center justify-between gap-4 py-3" key={location.id}><p className={`min-w-0 text-sm ${location.is_active?'':'opacity-50'}`}><b>{location.building}</b>{location.floor&&<> · {location.floor}</>}{location.room&&<> {location.room}</>}{!location.is_active&&<small className="ml-2 rounded-full bg-slate-100 px-2 py-1">Inactive</small>}</p><button className="btn-secondary btn-sm shrink-0" onClick={()=>openEditLocation(location)} aria-label={`Edit ${location.building}`}><Pencil size={15}/>Edit</button></div>)}</div>
+        <div className="mt-4 divide-y">{locations.map(location=><div className="flex items-center justify-between gap-4 py-3" key={location.id}><p className={`min-w-0 text-sm ${location.is_active?'':'opacity-50'}`}><b>{location.building}</b>{location.floor&&<> · {location.floor}</>}{location.room&&<> {location.room}</>}{!location.is_active&&<small className="ml-2 rounded-full bg-slate-100 px-2 py-1">Inactive</small>}</p><div className="flex shrink-0 gap-2"><button className="btn-secondary btn-sm" onClick={()=>openEditLocation(location)} aria-label={`Edit ${location.building}`}><Pencil size={15}/>Edit</button><button className="btn-secondary btn-sm text-red-600 hover:bg-red-50" onClick={()=>deleteLocation(location)} disabled={deletingLocationId===location.id} aria-label={`Delete ${location.building}`}><Trash2 size={15}/>{deletingLocationId===location.id?'Deleting…':'Delete'}</button></div></div>)}</div>
       </section>
     </div>
   </div>
